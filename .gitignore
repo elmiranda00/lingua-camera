@@ -1,0 +1,40 @@
+# Claude Code (local only)
+CLAUDE.md
+CLAUDE.local.md
+.claude/
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+*.tsbuildinfo
+
+# Wrangler / local D1 / Worker secrets
+.wrangler/
+.dev.vars
+.dev.vars.*
+
+# Env files and secrets
+.env
+.env.*
+!.env.example
+
+# Tests
+coverage/
+test-results/
+playwright-report/
+playwright/.cache/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/*
+!.vscode/extensions.json
+.idea/
