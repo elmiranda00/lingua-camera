@@ -1,5 +1,5 @@
 {
-  "name": "@lexi/shared",
+  "name": "@lingua-camera/shared",
   "private": true,
   "type": "module",
   "exports": {

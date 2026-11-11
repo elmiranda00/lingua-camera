@@ -23,10 +23,10 @@ request limits. Both `web` and `worker` import from here, so the contract is def
 
 ## Interfaces
 
-Import everything from `@lexi/shared`:
+Import everything from `@lingua-camera/shared`:
 
 ```ts
-import { LookupRequest, LIMITS, type LookupResult } from "@lexi/shared";
+import { LookupRequest, LIMITS, type LookupResult } from "@lingua-camera/shared";
 ```
 
 The package ships TypeScript source (no build step); Vite and Wrangler compile it.
@@ -35,7 +35,7 @@ The package ships TypeScript source (no build step); Vite and Wrangler compile i
 
 ```
 npx vitest run --project shared
-npm run typecheck -w @lexi/shared
+npm run typecheck -w @lingua-camera/shared
 ```
 
 ## Gotchas
