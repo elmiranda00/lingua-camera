@@ -1,0 +1,4 @@
+* text=auto eol=lf
+*.tar binary
+*.onnx binary
+*.wasm binary
