@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ApiError, LookupRequest, LookupResult, TtsRequest } from "./schemas.ts";
+import { ApiError, LookupRequest, LookupResult, TtsRequest } from "../src/schemas.ts";
 
 const validResult = {
   surface: "mangeaient",
@@ -42,15 +42,20 @@ describe("LookupResult", () => {
     expect(LookupResult.safeParse({ ...validResult, pos: "gerund" }).success).toBe(false);
   });
 
-  it("rejects more than 3 other meanings", () => {
-    expect(
-      LookupResult.safeParse({ ...validResult, otherMeanings: ["a", "b", "c", "d"] }).success,
-    ).toBe(false);
+  it("keeps only the first 3 other meanings", () => {
+    const parsed = LookupResult.parse({ ...validResult, otherMeanings: ["a", "b", "c", "d"] });
+    expect(parsed.otherMeanings).toEqual(["a", "b", "c"]);
   });
 
-  it("rejects a meaning over 80 chars", () => {
+  it("accepts a meaning slightly over the 80-char target", () => {
     expect(
-      LookupResult.safeParse({ ...validResult, meaningInContext: "x".repeat(81) }).success,
+      LookupResult.safeParse({ ...validResult, meaningInContext: "x".repeat(100) }).success,
+    ).toBe(true);
+  });
+
+  it("rejects a meaning over the 120-char hard cap", () => {
+    expect(
+      LookupResult.safeParse({ ...validResult, meaningInContext: "x".repeat(121) }).success,
     ).toBe(false);
   });
 

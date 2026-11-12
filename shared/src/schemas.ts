@@ -64,6 +64,16 @@ export const PartOfSpeech = z.enum([
 ]);
 export type PartOfSpeech = z.infer<typeof PartOfSpeech>;
 
+/** Max other meanings shown; extra ones from the model are dropped, not rejected. */
+export const OTHER_MEANINGS_MAX = 3;
+
+/**
+ * Hard cap on meaningInContext. The prompt asks for a short translation
+ * (target 80 chars); this cap only rejects replies that are clearly an
+ * explanation instead of a translation.
+ */
+export const MEANING_MAX_CHARS = 120;
+
 /** What the model must return for a lookup (spec: "LookupResult contract"). */
 export const LookupResult = z.object({
   surface: z.string().min(1),
@@ -71,8 +81,10 @@ export const LookupResult = z.object({
   pos: PartOfSpeech,
   gender: z.enum(["m", "f"]).nullable(),
   pinyin: z.string().nullable(),
-  meaningInContext: z.string().min(1).max(80),
-  otherMeanings: z.array(z.string().min(1)).max(3),
+  meaningInContext: z.string().trim().min(1).max(MEANING_MAX_CHARS),
+  otherMeanings: z
+    .array(z.string().trim().min(1))
+    .transform((meanings) => meanings.slice(0, OTHER_MEANINGS_MAX)),
   note: z.string().nullable(),
 });
 export type LookupResult = z.infer<typeof LookupResult>;

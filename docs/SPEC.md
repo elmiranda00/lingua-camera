@@ -153,7 +153,7 @@ Four D1 tables and six endpoints cover v1; every request and response is defined
 | `GET /api/words` | `?lang=fr\|zh` | All of the user's entries for that language (sorted on the phone) |
 | `POST /api/words` | `{lang, headword, surface, pinyin?, translation, otherMeanings, pos, gender?, context, kind}` | The entry. If the headword exists, adds `surface` to `surface_forms` instead of duplicating |
 | `DELETE /api/words/:id` | — | `204` |
-| `POST /api/tts` | `{lang, text}` (text ≤ 40 characters) | `audio/wav`; only used when the phone has no voice |
+| `POST /api/tts` | `{lang, text}` (text ≤ 40 characters) | `audio/mpeg` (MP3, what MeloTTS returns); only used when the phone has no voice |
 
 **`LookupResult` contract**
 
@@ -172,7 +172,7 @@ Four D1 tables and six endpoints cover v1; every request and response is defined
 
 - `pos` is one of: noun, verb, adjective, adverb, pronoun, determiner, preposition, conjunction, particle, classifier, numeral, interjection, phrase, other.
 - `headword`: French dictionary form (infinitive, masculine singular); Chinese = the word itself in Simplified characters.
-- `meaningInContext` ≤ 80 characters; `otherMeanings` ≤ 3 items; `note` names a fixed expression the word belongs to (e.g. *avoir beau*), else null.
+- `meaningInContext` is a translation (a word or short phrase), not a definition: the prompt asks for ≤ 80 characters and the server rejects anything over 120. `otherMeanings`: at most 3 are kept (extras are dropped, not rejected); `note` names a fixed expression the word belongs to (e.g. *avoir beau*), else null.
 
 **Lookup prompt**
 
@@ -257,7 +257,8 @@ The biggest risk is reachability from mainland China, which is why M0 tests it b
 
 **Open questions**
 
-- [ ] Product name and domain ("Lexi Lens" is a working name).
+- [x] Product name: Lingua Camera.
+- [ ] Domain (needed before the M0 China test; until then the app runs on `workers.dev`).
 - [ ] Does the China user open links in WeChat's built-in browser or a normal browser? This decides whether the live viewfinder or the photo-picker fallback is the main path for him.
 - [ ] Traditional characters: needed for any user (Hong Kong, Taiwan signage), or Simplified only?
 - [ ] Licences of the frequency lists (Lexique 3, HSK lists) confirmed for bundling.
