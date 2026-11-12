@@ -1,6 +1,6 @@
-// Request limits from the spec's limits table. Shared so both the Zod schemas
-// and the Worker use the same numbers. The Worker re-exports these from
-// worker/src/limits.ts, which is the place to read or change them.
+// Request limits (spec limits table)
+//
+// Change values here; worker/src/limits.ts re-exports them
 
 export const LIMITS = {
   /** Lookups per user per UTC day; cache hits don't count. */

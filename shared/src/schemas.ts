@@ -1,5 +1,6 @@
-// Zod schemas for every API request and response. Both the web app and the
-// Worker validate against these, so the contract is defined once.
+// API contract: Zod schemas for every request and response
+//
+// Used by both web and worker
 import { z } from "zod";
 import { LIMITS } from "./limits.ts";
 
@@ -67,11 +68,7 @@ export type PartOfSpeech = z.infer<typeof PartOfSpeech>;
 /** Max other meanings shown; extra ones from the model are dropped, not rejected. */
 export const OTHER_MEANINGS_MAX = 3;
 
-/**
- * Hard cap on meaningInContext. The prompt asks for a short translation
- * (target 80 chars); this cap only rejects replies that are clearly an
- * explanation instead of a translation.
- */
+/** Hard cap on meaningInContext; the prompt targets 80. */
 export const MEANING_MAX_CHARS = 120;
 
 /** What the model must return for a lookup (spec: "LookupResult contract"). */
