@@ -1,4 +1,4 @@
-// Runs every workspace's tests with one `npm run test`.
+// Runs every workspace's tests
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({

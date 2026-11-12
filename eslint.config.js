@@ -1,4 +1,4 @@
-// Lint config for all workspaces: ESLint recommended + typescript-eslint recommended.
+// Lint config for all workspaces
 import js from "@eslint/js";
 import tseslint from "typescript-eslint";
 
