@@ -25,6 +25,7 @@ npm run dev             # Worker + web app together
 | `npm run test:e2e` | Browser smoke test (builds first) |
 | `npm run typecheck` / `npm run lint` | Type and lint checks |
 | `npm run assets` | Download OCR models (hash-checked) and runtime files into `web/public` (dev and build run it) |
+| `npm run wordlists` | Rebuild the tier word lists in `web/src/tiers/data` from pinned sources |
 | `npm run build` | Build the web app to `web/dist` |
 | `npm run deploy` | Build, then deploy Worker and web app (CI normally does this) |
 

@@ -3,6 +3,15 @@
 Structural decisions, or ones that affect other parts of the system or later milestones.
 Newest first. Format: **Date · Decision**, then why and what it affects.
 
+## 2026-11-13 · Tier word lists: Lexique 3.83 (CC BY-SA 4.0) and HSK 3.0 levels 1–2
+
+- **Decision:** the French "common" list holds every form of the 2,000 most frequent Lexique 3.83
+  lemmas; the Chinese list is HSK 3.0 levels 1–2 (1,256 words, not HSK 2.0's ~300). Both are
+  committed as small JSON, built by `scripts/build-wordlists.mjs` from hash-pinned sources.
+- **Why:** lemma-based matching stops inflections such as *mangeaient* showing as Key; HSK 3.0 is the
+  current standard and gives a useful beginner cut. Lexique is share-alike, so the French list file stays CC BY-SA 4.0 with credits.
+- **Affects:** `web/src/tiers/`, `web/src/lang/`, the licence notice in `web/src/tiers/data/NOTICE.md`.
+
 ## 2026-11-13 · OCR: own worker, WASM-only runtime, OpenCV patched for the CSP
 
 - **Decision:** run PaddleOCR.js inside our own Web Worker (not its prebuilt one), with the

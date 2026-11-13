@@ -52,7 +52,7 @@ The app has three screens: Camera (home), Word bank, and a small Settings sheet.
 | Tier | Applies to | Style |
 | --- | --- | --- |
 | Saved | Word or phrase already in this user's bank | Light grey fill (about 25% opacity), thin grey outline |
-| Key | Content words that are less common (outside the top \~2,000 by frequency for French, or above HSK 2 for Mandarin) | Thicker coloured outline, rounded, slightly larger padding |
+| Key | Content words that are less common (outside the top \~2,000 lemmas by frequency for French, or above HSK 3.0 level 2 for Mandarin) | Thicker coloured outline, rounded, slightly larger padding |
 | Normal | Everything else, including stop words | Thin, light outline |
 
 All boxes are tappable, stop words included. Saved takes priority over Key. The tier rules are in the language pipelines section.
@@ -89,7 +89,7 @@ The app and OCR models download once and are cached; after that, each tap is one
 | Chinese word splitting | `Intl.Segmenter('zh', {granularity: 'word'})` | Built into the browser | Phone |
 | Pinyin | `pinyin-pro` | MIT | Phone |
 | Pronunciation | Web Speech API (`speechSynthesis`, phone's built-in voices); fallback: MeloTTS on Workers AI | Built-in / MIT | Phone / Cloudflare |
-| Word frequency lists | French: Lexique 3 top-N list; Mandarin: HSK 1–2 word list. Bundled as small JSON | Open data (check licences in M1) | Phone |
+| Word frequency lists | French: all forms of the top-2,000 Lexique 3.83 lemmas (CC BY-SA 4.0); Mandarin: HSK 3.0 levels 1–2 (1,256 words). Bundled as small JSON, credits in `web/src/tiers/data/NOTICE.md` | Open data, licences confirmed in M1 | Phone |
 | API | Cloudflare Worker with Hono, request validation with Zod | MIT | Cloudflare |
 | Static hosting | Workers Static Assets (same Worker, same domain) | — | Cloudflare |
 | Database | D1 (SQLite) | — | Cloudflare |
@@ -116,9 +116,9 @@ Both languages share one pipeline (photo → OCR → word boxes → tiers → ta
 | Image prep | Downscale to 1600 px on the long side, JPEG quality 0.85, keep the original for display | Same |
 | OCR models | `PP-OCRv5_mobile_det` + `latin_PP-OCRv5_mobile_rec` | `PP-OCRv5_mobile_det` + `PP-OCRv5_mobile_rec` (also reads English and pinyin on signs) |
 | Line → words | `Intl.Segmenter('fr', {granularity:'word'})`; elisions split (`l'` + `homme`), hyphenated compounds kept whole | `Intl.Segmenter('zh', {granularity:'word'})` on the line text |
-| Word boxes | Line box split by character count (approximate); use per-character positions instead if PaddleOCR.js exposes them | Characters are evenly spaced, so each gets an equal share of the line; a word box is the union of its characters. Vertical lines (height > 2× width) split top to bottom |
+| Word boxes | Line box split by estimated character widths (approximate); PaddleOCR.js does not expose per-character positions | Han characters are evenly spaced (digits and Latin letters count as narrower); a word box is the union of its characters. Vertical lines (height > 2× width) split top to bottom |
 | Sentence context | Lines joined in reading order within a block; end-of-line hyphenation rejoined (`extra-` + `ordinaire`); cut at `. ! ? …`; max 300 characters | Lines joined without spaces; cut at `。！？`; max 300 characters. A sign with no punctuation sends its whole text block |
-| Key-word tier | Lower-cased form not in the Lexique top-2,000 list, and not a capitalised name mid-sentence | Word not in the HSK 1–2 list, and not punctuation or a number |
+| Key-word tier | Lower-cased form not in the list of forms of the top-2,000 Lexique lemmas, and not a capitalised name mid-sentence (ALL CAPS and sentence starts are judged normally) | Word contains a Han character and is not in the HSK 3.0 level 1–2 list (Latin text, numbers and punctuation are never Key) |
 | Saved-word match | Normalise: lower-case, Unicode NFC, strip elision prefix and punctuation; match the saved headword or any saved surface form | Exact string match on the saved headword; a saved phrase shades every box it spans in the line text |
 | Pinyin | — | `pinyin-pro` on the whole word (handles characters with several readings), tone marks; also stored without tones for search and sort |
 | Speech | `speechSynthesis`, `lang='fr-FR'` | `speechSynthesis`, `lang='zh-CN'`, rate 0.9 |
@@ -264,7 +264,7 @@ The biggest risk is reachability from mainland China. v1 accepts that the China 
 - [x] Domain: not needed for v1. The China user connects through a VPN, so the app stays on `workers.dev`. Revisit if they want to work without the VPN.
 - [x] Does the China user open links in WeChat's built-in browser or a normal browser? **Chrome** (answered 2026-11-13), so the live viewfinder is the main path; the photo picker stays as a fallback. He also has a VPN.
 - [ ] Traditional characters: needed for any user (Hong Kong, Taiwan signage), or Simplified only?
-- [ ] Licences of the frequency lists (Lexique 3, HSK lists) confirmed for bundling.
+- [x] Licences of the frequency lists (Lexique 3, HSK lists) confirmed for bundling. (2026-11-13: Lexique 3.83 is CC BY-SA 4.0, bundled with credits; HSK 3.0 lists via an MIT repository. See `web/src/tiers/data/NOTICE.md`.)
 
 **After v1**
 

@@ -31,6 +31,8 @@ score per **line**. The worker loads the models (`/models/*.tar`) and the ONNX R
 | `src/ocr/engine.ts` | Page side of OCR: `loadOcr(lang)`, `recognize(lang, image)` |
 | `src/ocr/ocr.worker.ts` | OCR Web Worker: one PaddleOCR engine per language |
 | `src/ocr/protocol.ts` | Messages between page and worker |
+| `src/lang/` | Per-language modules (word splitting, word boxes, key-word rule). See its README |
+| `src/tiers/` | Saved / Key / Normal tier rules and the word lists. See its README |
 | `src/pages/OcrTest.tsx` | Temporary: pick a photo, see line boxes and timings (removed with the camera page) |
 | `vite-plugins/opencvCsp.ts` | Build-time patch so OpenCV.js runs under our CSP (see Design choices) |
 | `../scripts/ocr-assets.mjs` | Downloads the models (hash-checked) and copies the ORT WASM into `public/` (gitignored) |
@@ -75,6 +77,8 @@ npm run typecheck -w @lingua-camera/web
 | clipper-lib 6.4.2 | Boost Software License 1.0 | Transitive: polygon offsets. Permissive; accepted as an exception to the MIT/Apache/BSD preference |
 | js-yaml 4.3.2 | MIT | Transitive: reads model config |
 
+Word lists (data, not packages): Lexique 3.83 (CC BY-SA 4.0) and HSK 3.0 levels 1–2 (MIT repository). Credits: `src/tiers/data/NOTICE.md`.
+
 OCR models (not npm packages, fetched by `scripts/ocr-assets.mjs`): PP-OCRv5 mobile detection,
 Chinese recognition and Latin recognition (Apache-2.0, PaddlePaddle).
 
@@ -107,5 +111,5 @@ Planned for M1, not installed yet:
 - Always set `ortOptions.wasmPaths`: PaddleOCR's default loads ONNX Runtime from a CDN.
 - PaddleOCR's own image loader needs `document`, which a worker lacks; the worker passes an OpenCV `Mat` instead.
 - `npm run assets` needs internet the first time (models come from Baidu's bucket); after that, files with the right hash are kept.
-- OCR returns lines, not words or characters. Word boxes come from splitting a line's box (checkpoint 2).
+- OCR returns lines, not words or characters. Word boxes come from splitting a line's box by estimated character widths (`src/lang/`).
 - ONNX Runtime logs warnings about unused model weights during load; they are harmless.
