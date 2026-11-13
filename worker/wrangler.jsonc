@@ -26,8 +26,7 @@
     {
       "binding": "DB",
       "database_name": "lingua-camera",
-      // Replace with the id printed by `npx wrangler d1 create lingua-camera`.
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_id": "426a9095-5ba2-4eb1-bdb5-094de91bfef1",
       "migrations_dir": "migrations"
     }
   ],
