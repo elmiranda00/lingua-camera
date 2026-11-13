@@ -12,12 +12,11 @@
   ],
   "scripts": {
     "dev": "concurrently -k -n worker,web -c yellow,cyan \"npm run dev -w @lingua-camera/worker\" \"npm run dev -w @lingua-camera/web\"",
-    "build": "npm run models:fetch && npm run build -w @lingua-camera/web",
+    "build": "npm run build -w @lingua-camera/web",
     "test": "vitest run",
     "test:e2e": "playwright test",
     "typecheck": "npm run typecheck --workspaces",
     "lint": "eslint .",
-    "models:fetch": "node scripts/fetch-models.ts",
     "db:migrate:local": "npm run db:migrate:local -w @lingua-camera/worker",
     "db:migrate:remote": "npm run db:migrate:remote -w @lingua-camera/worker",
     "deploy": "npm run build && npm run deploy -w @lingua-camera/worker"

@@ -56,7 +56,7 @@ npm run db:migrate:local
 - **One Worker for API and web.** One origin, so no CORS and the CSP can forbid every other host.
 - **Static files also go through the Worker** (`run_worker_first`), so the CSP covers every page.
 - **Model output is never trusted.** Always Zod-validated; one retry, then a typed `502`.
-- **Qwen3 thinking is off** (`/no_think`). Unverified on Workers AI; M0 checks the timings.
+- **Qwen3 thinking is off** (`/no_think`). Unverified on Workers AI; the first deploy checks the timings.
 - **Logs never contain words, sentences or tokens.**
 - **M0 auth is one shared token**, replaced by per-user invite tokens in M3.
 

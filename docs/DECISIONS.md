@@ -3,6 +3,19 @@
 Structural decisions, or ones that affect other parts of the system or later milestones.
 Newest first. Format: **Date · Decision**, then why and what it affects.
 
+## 2026-11-13 · Build in France first; China check runs in parallel
+
+- **Decision:** M0 is the scaffold deployed to `workers.dev` (no diagnostics page). M1 (camera
+  and OCR) starts straight after. The China check is no longer a gate before M1: it runs as
+  soon as the domain exists and must pass before the China user is invited (M3).
+- **Why:** get a usable app sooner, and test the other big risk (OCR speed and word-box
+  accuracy) early. Most code doesn't depend on the China result; a failure mostly changes
+  hosting (HK/SG server in front of the Worker).
+- **Risk accepted:** if the China user's browser is WeChat's built-in one, parts of the camera
+  and OCR loading may need rework. Mitigated by the photo-picker and WASM fallbacks in M1.
+- **Affects:** SPEC milestones, acceptance checks and risks. A small `/diag` page (voice, model
+  download, origin check) is built later for the China check.
+
 ## 2026-11-12 · Lookups: translations, with a lenient size check
 
 - **Decision:** `meaningInContext` is a short English translation, not a definition. The prompt
@@ -24,13 +37,13 @@ Newest first. Format: **Date · Decision**, then why and what it affects.
   tolerantly and always validated with Zod.
 - **Why:** thinking adds seconds per lookup (target p50 < 2 s). Neither JSON-mode support nor
   `/no_think` is confirmed for this model on Workers AI.
-- **Affects:** `worker/src/lib/model.ts`. **M0 to verify:** lookup timings show thinking is off,
+- **Affects:** `worker/src/lib/model.ts`. **First deploy to verify:** lookup timings show thinking is off,
   and whether JSON mode works. Update this entry with the result.
 
 ## 2026-11-11 · Hosting stays on Cloudflare; `workers.dev` until the domain
 
 - **Decision:** deploy to `lingua-camera.<account>.workers.dev` first; buy a custom domain before
-  the M0 China test. No Chinese host.
+  the China check. No Chinese host.
 - **Why:** mainland hosting needs an ICP filing, unavailable to a foreign individual; Chinese
   providers' free tiers serve China from outside the mainland, like Cloudflare, without D1 or
   Workers AI. `workers.dev` is blocked in China, so the China test needs the domain.
