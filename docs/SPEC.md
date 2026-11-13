@@ -126,7 +126,7 @@ Both languages share one pipeline (photo → OCR → word boxes → tiers → ta
 
 **Saved-word matching, French detail.** Inflected forms only match after they have been looked up once: each lookup records the surface form against its headword, and saving keeps the list. So *mangeaient* shades grey once it is saved; *mangerons* shades only after it is tapped and its headword turns out to be *manger*. Good enough for v1.
 
-**Speech fallback.** If the phone has no voice for the language, the 🔊 button calls `/api/tts` (MeloTTS on Workers AI) and caches the audio on the device. M0 confirms whether MeloTTS on Workers AI supports Chinese; if it does not, the button is hidden on phones without a Chinese voice.
+**Speech fallback.** If the phone has no voice for the language, the 🔊 button calls `/api/tts` (MeloTTS on Workers AI) and caches the audio on the device. The first deploy confirms whether MeloTTS on Workers AI supports Chinese; if it does not, the button is hidden on phones without a Chinese voice.
 
 **Pinyin from two sources.** The model also returns pinyin. The app shows the `pinyin-pro` result and logs any disagreement, which becomes a test case for the eval set.
 
@@ -216,22 +216,24 @@ The Workers AI free allocation is 10,000 Neurons per day, reset at 00:00 UTC. At
 
 ## Milestones
 
-v1 is done when M3 passes; each milestone ships something usable on a phone, and M0 is a go/no-go gate on China access.
+v1 is done when M3 passes; each milestone ships something usable on a phone. M0–M2 are built and tested in France; the China check runs in parallel and must pass before the China user is invited (M3).
 
 | Milestone | Delivers |
 | --- | --- |
-| **M0 · China test** (go/no-go gate) | Domain + Worker live; loads from China; OCR models + voice OK |
-| **M1 · Photo to boxes** | On-phone OCR, FR + ZH; word boxes, 3 tiers; under 4 s per photo |
+| **M0 · Scaffold** | Repo, shared schemas, Worker and web app deployed to `workers.dev`; CI green |
+| **M1 · Photo to boxes** | Camera page; on-phone OCR, FR + ZH; word boxes, 3 tiers; under 4 s per photo |
 | **M2 · Tap to translate** | Qwen lookup + cache; pinyin and audio; under 2 s at p50 |
 | **M3 · Word bank** | Invite-link sign-in; Save + grey shading; sorted A–Z / by pinyin |
+| **China check** (parallel, gate for M3) | Custom domain; app, models and voice work from China without a VPN |
 | *After v1* | Phrases, paste-text, dictionaries, eval set, self-hosted benchmark |
 
-If M0 fails, fix reachability (see Risks) before starting M1.
+If the China check fails, fix reachability (see Risks) before inviting the China user.
 
 **Acceptance checks**
 
-- [ ] **M0** — `https://<domain>/api/health` and a test lookup work from the China user's phone without a VPN.
-- [ ] **M0** — The \~25 MB OCR model files download and cache on his phone; `speechSynthesis` speaks Chinese, or MeloTTS on Workers AI does.
+- [ ] **M0** — `https://lingua-camera.<subdomain>.workers.dev/api/health` works from a phone in France; CI is green on the PR.
+- [ ] **China** — On the China user's phone, without a VPN: the app and `/api/health` load, and a test lookup works.
+- [ ] **China** — The \~30 MB OCR model files download and cache on their phone; `speechSynthesis` speaks Chinese, or MeloTTS on Workers AI does.
 - [ ] **M1** — A novel page (FR) and a street sign (ZH) both show a box on every word, with all three tiers visible; under 4 s from shutter on a mid-range phone.
 - [ ] **M1** — No request leaves the device during OCR (checked in the network panel).
 - [ ] **M2** — Tapping a box shows meaning in context, part of speech, and pinyin for Chinese; 🔊 plays; p50 under 2 s from France, measured from logs.
@@ -241,25 +243,26 @@ If M0 fails, fix reachability (see Risks) before starting M1.
 
 ## Risks, open questions and roadmap
 
-The biggest risk is reachability from mainland China, which is why M0 tests it before anything else is built.
+The biggest risk is reachability from mainland China. The China check tests it in parallel with M1–M2, as soon as the domain exists, so a failure is found before the China user is invited.
 
 **Risks**
 
 | Risk | Impact | Mitigation |
 | --- | --- | --- |
-| Cloudflare's overseas edge is slow or drops packets from China | Slow loads, failed lookups for the China user | Test in M0; keep requests tiny; fall back to a cheap Singapore/HK server in front of the same Worker, or the user's VPN |
-| \~25 MB OCR model download fails or is slow from China | First use doesn't work | Cache with a service worker; show download progress; test in M0 |
+| Cloudflare's overseas edge is slow or drops packets from China | Slow loads, failed lookups for the China user | Test in the China check; keep requests tiny; fall back to a cheap Singapore/HK server in front of the same Worker, or the user's VPN |
+| \~30 MB OCR model download fails or is slow from China | First use doesn't work | Cache with a service worker; show download progress; test in the China check |
+| China user's browser (e.g. WeChat's built-in one) blocks the camera or lacks WebGPU | Camera or OCR built in France doesn't work for them | Photo-picker fallback built in M1; WASM fallback for OCR; ask which browser they use (open question) |
 | On-device OCR too slow on older phones | Long wait after the shutter | Mobile models, WebGPU where available, downscaled image; measure in M1 (target < 4 s) |
 | Line-to-word box splitting misaligns on French text | Taps land on the wrong word | Use per-character positions if PaddleOCR.js exposes them; otherwise widen hit areas; Tesseract.js (`fra`) as plan B for French only |
-| Phone lacks a Chinese voice, and MeloTTS on Workers AI lacks Chinese | No audio | Confirm in M0; hide 🔊 gracefully |
+| Phone lacks a Chinese voice, and MeloTTS on Workers AI lacks Chinese | No audio | Confirm in the China check; hide 🔊 gracefully |
 | Workers AI model is retired or renamed | Lookups fail | Model name is a config value; Mistral Small is the tested alternative |
 | Free allocation used up | Lookups fail until 00:00 UTC | Per-user caps, cache, clear message in the popup |
 
 **Open questions**
 
 - [x] Product name: Lingua Camera.
-- [ ] Domain (needed before the M0 China test; until then the app runs on `workers.dev`).
-- [ ] Does the China user open links in WeChat's built-in browser or a normal browser? This decides whether the live viewfinder or the photo-picker fallback is the main path for him.
+- [ ] Domain (needed for the China check; until then the app runs on `workers.dev`).
+- [ ] Does the China user open links in WeChat's built-in browser or a normal browser? This decides whether the live viewfinder or the photo-picker fallback is the main path for them. Asked 2026-11-13, awaiting answer.
 - [ ] Traditional characters: needed for any user (Hong Kong, Taiwan signage), or Simplified only?
 - [ ] Licences of the frequency lists (Lexique 3, HSK lists) confirmed for bundling.
 
