@@ -45,3 +45,6 @@ web/public/ort/
 
 # Local test photos (never committed; OCR output JSON goes in web/test/ocr/__fixtures__/)
 fixtures/
+
+# Raw word-list downloads
+.cache/
