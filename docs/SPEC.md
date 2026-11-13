@@ -231,7 +231,7 @@ If the China check fails, fix reachability (see Risks) before inviting the China
 
 **Acceptance checks**
 
-- [ ] **M0** — `https://lingua-camera.<subdomain>.workers.dev/api/health` works from a phone in France; CI is green on the PR.
+- [x] **M0** — `https://lingua-camera.<subdomain>.workers.dev/api/health` works from a phone in France; CI is green on the PR. (Verified 2026-11-13: CI deployed from `main`, `/api/health` returns the commit hash.)
 - [ ] **China** — On the China user's phone, with their VPN on: the app and `/api/health` load, and a test lookup works.
 - [ ] **China** — The \~30 MB OCR model files download and cache on their phone; `speechSynthesis` speaks Chinese, or MeloTTS on Workers AI does.
 - [ ] **M1** — A novel page (FR) and a street sign (ZH) both show a box on every word, with all three tiers visible; under 4 s from shutter on a mid-range phone.

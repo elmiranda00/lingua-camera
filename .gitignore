@@ -38,3 +38,10 @@ desktop.ini
 .vscode/*
 !.vscode/extensions.json
 .idea/
+
+# OCR runtime files (fetched by scripts/ocr-assets.mjs)
+web/public/models/
+web/public/ort/
+
+# Local test photos (never committed; OCR output JSON goes in web/test/ocr/__fixtures__/)
+fixtures/

@@ -3,6 +3,19 @@
 Structural decisions, or ones that affect other parts of the system or later milestones.
 Newest first. Format: **Date · Decision**, then why and what it affects.
 
+## 2026-11-13 · OCR: own worker, WASM-only runtime, OpenCV patched for the CSP
+
+- **Decision:** run PaddleOCR.js inside our own Web Worker (not its prebuilt one), with the
+  WASM-only ONNX Runtime, and patch OpenCV.js at build time to remove `new Function` and a
+  `data:` fetch. The CSP is unchanged (no `unsafe-eval`).
+- **Why:** the prebuilt worker needs a 29 MB WebGPU file (over Cloudflare's 25 MiB per-file limit),
+  and OpenCV's generated code is blocked by the CSP. Loosening the CSP was rejected.
+- **Measured (desktop Chromium, 1 thread):** French page 4.3 s, Chinese menu (186 lines) 11.1 s;
+  text and boxes accurate on both. Phone timing and threads/WebGPU are decided at checkpoint 3.
+- **Affects:** `web/vite.config.ts`, `web/vite-plugins/opencvCsp.ts`, `web/src/ocr/`. An OpenCV or
+  PaddleOCR.js upgrade must re-run the patch test. Fallback if patching breaks: run ONNX Runtime
+  directly without OpenCV.
+
 ## 2026-11-13 · No custom domain for v1; the China user connects through a VPN
 
 - **Decision:** stay on `lingua-camera.<subdomain>.workers.dev`. The China user already uses a

@@ -11,8 +11,9 @@
     "web"
   ],
   "scripts": {
-    "dev": "concurrently -k -n worker,web -c yellow,cyan \"npm run dev -w @lingua-camera/worker\" \"npm run dev -w @lingua-camera/web\"",
-    "build": "npm run build -w @lingua-camera/web",
+    "assets": "node scripts/ocr-assets.mjs",
+    "dev": "npm run assets && concurrently -k -n worker,web -c yellow,cyan \"npm run dev -w @lingua-camera/worker\" \"npm run dev -w @lingua-camera/web\"",
+    "build": "npm run assets && npm run build -w @lingua-camera/web",
     "test": "vitest run",
     "test:e2e": "npm run build && playwright test",
     "typecheck": "npm run typecheck --workspaces",
