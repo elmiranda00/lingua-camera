@@ -24,9 +24,9 @@ CREATE TABLE entries (
   context         TEXT NOT NULL,
   kind            TEXT NOT NULL CHECK (kind IN ('word', 'phrase')),
   created_at      TEXT NOT NULL DEFAULT (datetime('now')),
+  -- Also indexes (user_id, lang) lookups, so no separate index is needed
   UNIQUE (user_id, lang, headword)
 );
-CREATE INDEX entries_user_lang ON entries (user_id, lang);
 
 CREATE TABLE lookup_cache (
   key         TEXT PRIMARY KEY,
