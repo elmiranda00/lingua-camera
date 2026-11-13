@@ -1,0 +1,22 @@
+{
+  "name": "@lingua-camera/worker",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "typecheck": "tsc -p tsconfig.json",
+    "deploy": "wrangler deploy",
+    "db:migrate:local": "wrangler d1 migrations apply DB --local",
+    "db:migrate:remote": "wrangler d1 migrations apply DB --remote"
+  },
+  "dependencies": {
+    "@lingua-camera/shared": "*",
+    "hono": "4.13.18",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-plugin": "1.8.0",
+    "@cloudflare/workers-types": "5.20261110.1",
+    "wrangler": "4.160.1"
+  }
+}
