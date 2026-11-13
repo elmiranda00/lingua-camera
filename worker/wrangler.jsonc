@@ -39,5 +39,17 @@
   },
 
   // Prompt files are bundled as plain text.
-  "rules": [{ "type": "Text", "globs": ["**/*.md"], "fallthrough": true }]
+  "rules": [{ "type": "Text", "globs": ["**/*.md"], "fallthrough": true }],
+
+  "env": {
+    // For the browser smoke test (`wrangler dev --env smoke`): no AI or D1 binding,
+    // so it runs without a Cloudflare login, e.g. in CI. Never deploy this one.
+    "smoke": {
+      "vars": {
+        "APP_VERSION": "smoke",
+        "LOOKUP_MODEL": "unused",
+        "TTS_MODEL": "unused"
+      }
+    }
+  }
 }

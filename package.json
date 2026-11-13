@@ -14,7 +14,7 @@
     "dev": "concurrently -k -n worker,web -c yellow,cyan \"npm run dev -w @lingua-camera/worker\" \"npm run dev -w @lingua-camera/web\"",
     "build": "npm run build -w @lingua-camera/web",
     "test": "vitest run",
-    "test:e2e": "playwright test",
+    "test:e2e": "npm run build && playwright test",
     "typecheck": "npm run typecheck --workspaces",
     "lint": "eslint .",
     "db:migrate:local": "npm run db:migrate:local -w @lingua-camera/worker",
