@@ -24,7 +24,8 @@ placeholder home page; M1 turns it into the camera.
 | `src/pages/` | `Home`, `NotFound`, `Loading`, `RouteError`, `homeLoader` |
 | `src/api/client.ts` | API client: validation, typed errors, 10 s timeout, request-ID logging |
 | `vite.config.ts` | Build to `dist/`; in dev, forwards `/api` to the local Worker |
-| `test/` | Tests, mirroring `src/` |
+| `test/` | Unit tests, mirroring `src/` |
+| `test/e2e/smoke.spec.ts` | Browser smoke test: loads the built app through the Worker, fails on CSP violations, errors or other origins |
 
 ## Interfaces
 
@@ -42,6 +43,7 @@ API client (`src/api/client.ts`): `api.getHealth()`. Errors are `ApiRequestError
 npm run dev                          # from the repo root: Worker + Vite together
 npm run build -w @lingua-camera/web  # writes web/dist
 npx vitest run --project web
+npm run test:e2e                     # from the repo root: build, start Worker, run Chromium at 375 px
 npm run typecheck -w @lingua-camera/web
 ```
 

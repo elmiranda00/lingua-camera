@@ -46,6 +46,7 @@ Secret: `M0_TOKEN` (`npx wrangler secret put M0_TOKEN`; locally in `worker/.dev.
 
 ```
 npm run dev -w @lingua-camera/worker          # needs a Cloudflare login and web/dist
+npm run dev:smoke -w @lingua-camera/worker    # no AI binding, no login; used by the browser smoke test
 npx vitest run --project worker               # tests run in workerd, AI mocked
 npm run typecheck -w @lingua-camera/worker
 npm run db:migrate:local
@@ -64,6 +65,9 @@ npm run db:migrate:local
 
 - The `ai` binding is remote-only. `wrangler dev` uses the real model and your free allocation;
   tests mock it and use `remoteBindings: false`.
-- `wrangler dev` fails until `web/dist` exists. Until then: `wrangler dev --assets <any folder>`.
+- `wrangler dev` fails if `web/dist` is missing: run `npm run build` first.
+- `wrangler.jsonc` has a `smoke` environment (no AI or D1 binding) for the browser test only.
+  Deploy and migration scripts pass `--env=""` so they always target the top-level environment.
+- `APP_VERSION` is `dev` locally; CI sets it to the short commit hash on deploy.
 - A new prompt means a new file and a new version string in `src/llm.ts`.
 - If `M0_TOKEN` is unset, lookup and TTS return `401`.
