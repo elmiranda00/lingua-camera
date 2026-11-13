@@ -16,7 +16,7 @@ v1 is a phone web app: photograph a page or a sign, tap any word, see its Englis
 1. Shutter → boxes over every word in under 2-4 s on a mid-range phone.
 2. Tap → in-context translation in under 2 s (p50), with pinyin and audio for Chinese.
 3. Save in one tap; saved words show shaded grey the next time they appear.
-4. Works without a VPN in mainland China, and costs €0/month to run (a domain at about €10/year is the only cost).
+4. Works in mainland China (through the China user's VPN; access without one is a later option), and costs €0/month to run (a custom domain at about €10/year would be the only cost, and isn't needed for v1).
 
 **Non-goals for v1**
 
@@ -30,7 +30,7 @@ v1 is a phone web app: photograph a page or a sign, tap any word, see its Englis
 
 Every design choice below follows from one rule: the user's browser talks only to our own domain, and everything heavy that can run on the phone does.
 
-1. **Reachable from mainland China without a VPN.** Google services are blocked there, and so are `workers.dev`, Hugging Face and many public CDNs. The app is served from a custom domain on Cloudflare, and every runtime file (JS, WASM, OCR models, fonts) is served from that domain. A strict Content Security Policy (`default-src 'self'`) enforces this.
+1. **Usable from mainland China.** Google services are blocked there, and so are `workers.dev` (without a VPN), Hugging Face and many public CDNs. v1 runs on `workers.dev` and the China user connects through their VPN; a custom domain on Cloudflare would remove that need later. Either way, every runtime file (JS, WASM, OCR models, fonts) is served from our own origin, and a strict Content Security Policy (`default-src 'self'`) enforces it.
 2. **Free to run for ≤10 users.** Cloudflare's free plan covers hosting, the API, the database and model inference. Nothing is billed per use; the Workers AI free allocation fails closed when used up instead of charging.
 3. **Open-source software and open-weight models.** Hosting is Cloudflare's (proprietary, free); everything running on it is open and portable: SQLite-compatible storage, standard `fetch` code, Apache-2.0 or MIT models and libraries.
 4. **Photos never leave the phone.** OCR runs in the browser. Only the tapped word and its sentence are sent to the server.
@@ -77,7 +77,7 @@ All boxes are tappable, stop words included. Saved takes priority over Key. The 
 
 ## Architecture and tech stack
 
-One Cloudflare Worker on our custom domain serves both the web app and the API; OCR, word splitting, pinyin and speech run on the phone, so only small text requests cross the network.
+One Cloudflare Worker on a single origin (`workers.dev` for v1, a custom domain later) serves both the web app and the API; OCR, word splitting, pinyin and speech run on the phone, so only small text requests cross the network.
 
 
 The app and OCR models download once and are cached; after that, each tap is one small JSON request to the Worker, which calls Workers AI and D1.
@@ -216,7 +216,7 @@ The Workers AI free allocation is 10,000 Neurons per day, reset at 00:00 UTC. At
 
 ## Milestones
 
-v1 is done when M3 passes; each milestone ships something usable on a phone. M0–M2 are built and tested in France; the China check runs in parallel and must pass before the China user is invited (M3).
+v1 is done when M3 passes; each milestone ships something usable on a phone. M0–M2 are built and tested in France; the China check (with the user's VPN on) runs in parallel and should pass before the China user is invited (M3).
 
 | Milestone | Delivers |
 | --- | --- |
@@ -224,7 +224,7 @@ v1 is done when M3 passes; each milestone ships something usable on a phone. M0�
 | **M1 · Photo to boxes** | Camera page; on-phone OCR, FR + ZH; word boxes, 3 tiers; under 4 s per photo |
 | **M2 · Tap to translate** | Qwen lookup + cache; pinyin and audio; under 2 s at p50 |
 | **M3 · Word bank** | Invite-link sign-in; Save + grey shading; sorted A–Z / by pinyin |
-| **China check** (parallel, gate for M3) | Custom domain; app, models and voice work from China without a VPN |
+| **China check** (parallel, before M3 invite) | App, models and voice work on the China user's phone through their VPN. Custom domain (no-VPN access) deferred. |
 | *After v1* | Phrases, paste-text, dictionaries, eval set, self-hosted benchmark |
 
 If the China check fails, fix reachability (see Risks) before inviting the China user.
@@ -232,7 +232,7 @@ If the China check fails, fix reachability (see Risks) before inviting the China
 **Acceptance checks**
 
 - [ ] **M0** — `https://lingua-camera.<subdomain>.workers.dev/api/health` works from a phone in France; CI is green on the PR.
-- [ ] **China** — On the China user's phone, without a VPN: the app and `/api/health` load, and a test lookup works.
+- [ ] **China** — On the China user's phone, with their VPN on: the app and `/api/health` load, and a test lookup works.
 - [ ] **China** — The \~30 MB OCR model files download and cache on their phone; `speechSynthesis` speaks Chinese, or MeloTTS on Workers AI does.
 - [ ] **M1** — A novel page (FR) and a street sign (ZH) both show a box on every word, with all three tiers visible; under 4 s from shutter on a mid-range phone.
 - [ ] **M1** — No request leaves the device during OCR (checked in the network panel).
@@ -243,15 +243,15 @@ If the China check fails, fix reachability (see Risks) before inviting the China
 
 ## Risks, open questions and roadmap
 
-The biggest risk is reachability from mainland China. The China check tests it in parallel with M1–M2, as soon as the domain exists, so a failure is found before the China user is invited.
+The biggest risk is reachability from mainland China. v1 accepts that the China user needs a VPN; the China check confirms the app works through it before they are invited.
 
 **Risks**
 
 | Risk | Impact | Mitigation |
 | --- | --- | --- |
-| Cloudflare's overseas edge is slow or drops packets from China | Slow loads, failed lookups for the China user | Test in the China check; keep requests tiny; fall back to a cheap Singapore/HK server in front of the same Worker, or the user's VPN |
+| `workers.dev` is blocked in China, and the China user's VPN can drop | App unusable for them whenever the VPN is off or flaky | Accepted for v1 (they use a VPN). To remove the need: add a custom domain (one config line), or a cheap Singapore/HK server in front of the Worker. Keep requests tiny. |
 | \~30 MB OCR model download fails or is slow from China | First use doesn't work | Cache with a service worker; show download progress; test in the China check |
-| China user's browser (e.g. WeChat's built-in one) blocks the camera or lacks WebGPU | Camera or OCR built in France doesn't work for them | Photo-picker fallback built in M1; WASM fallback for OCR; ask which browser they use (open question) |
+| China user's phone lacks WebGPU in Chrome | Slower OCR for him | WASM fallback for OCR; measure in M1. (WeChat risk closed: he uses Chrome) |
 | On-device OCR too slow on older phones | Long wait after the shutter | Mobile models, WebGPU where available, downscaled image; measure in M1 (target < 4 s) |
 | Line-to-word box splitting misaligns on French text | Taps land on the wrong word | Use per-character positions if PaddleOCR.js exposes them; otherwise widen hit areas; Tesseract.js (`fra`) as plan B for French only |
 | Phone lacks a Chinese voice, and MeloTTS on Workers AI lacks Chinese | No audio | Confirm in the China check; hide 🔊 gracefully |
@@ -261,8 +261,8 @@ The biggest risk is reachability from mainland China. The China check tests it i
 **Open questions**
 
 - [x] Product name: Lingua Camera.
-- [ ] Domain (needed for the China check; until then the app runs on `workers.dev`).
-- [ ] Does the China user open links in WeChat's built-in browser or a normal browser? This decides whether the live viewfinder or the photo-picker fallback is the main path for them. Asked 2026-11-13, awaiting answer.
+- [x] Domain: not needed for v1. The China user connects through a VPN, so the app stays on `workers.dev`. Revisit if they want to work without the VPN.
+- [x] Does the China user open links in WeChat's built-in browser or a normal browser? **Chrome** (answered 2026-11-13), so the live viewfinder is the main path; the photo picker stays as a fallback. He also has a VPN.
 - [ ] Traditional characters: needed for any user (Hong Kong, Taiwan signage), or Simplified only?
 - [ ] Licences of the frequency lists (Lexique 3, HSK lists) confirmed for bundling.
 

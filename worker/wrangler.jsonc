@@ -4,8 +4,8 @@
   "main": "src/index.ts",
   "compatibility_date": "2026-11-01",
 
-  // M0: serve on <name>.<account>.workers.dev. Add the custom domain under
-  // "routes" before the China test (workers.dev is blocked in mainland China).
+  // Served on <name>.<subdomain>.workers.dev (blocked in China without a VPN).
+  // For a custom domain, add it under "routes".
   "workers_dev": true,
   "preview_urls": false,
 
