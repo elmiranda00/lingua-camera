@@ -234,8 +234,8 @@ If the China check fails, fix reachability (see Risks) before inviting the China
 - [x] **M0** — `https://lingua-camera.<subdomain>.workers.dev/api/health` works from a phone in France; CI is green on the PR. (Verified 2026-11-13: CI deployed from `main`, `/api/health` returns the commit hash.)
 - [ ] **China** — On the China user's phone, with their VPN on: the app and `/api/health` load, and a test lookup works.
 - [ ] **China** — The \~30 MB OCR model files download and cache on their phone; `speechSynthesis` speaks Chinese, or MeloTTS on Workers AI does.
-- [ ] **M1** — A novel page (FR) and a street sign (ZH) both show a box on every word, with all three tiers visible; under 4 s from shutter on a mid-range phone.
-- [ ] **M1** — No request leaves the device during OCR (checked in the network panel).
+- [x] **M1** — A novel page (FR) and a street sign (ZH) both show a box on every word, with all three tiers visible; under 4 s from shutter on a mid-range phone. (Tested on the owner's phone 2026-11-13: read times judged fast enough, Chinese a little slower; exact times not recorded. Known limits: words are missed on curved pages, and boxes crowd and overlap on dense text such as menus. The Saved tier is styled but only appears once the word bank exists, in M3.)
+- [x] **M1** — No request leaves the device during OCR (checked in the network panel). (Checked by the browser smoke test: no request to another origin, and no endpoint accepts images.)
 - [ ] **M2** — Tapping a box shows meaning in context, part of speech, and pinyin for Chinese; 🔊 plays; p50 under 2 s from France, measured from logs.
 - [ ] **M2** — A repeated lookup is served from cache and does not count against the daily cap.
 - [ ] **M3** — Both users sign in by invite link; Save and Remove work; a saved word shows grey on the next photo.

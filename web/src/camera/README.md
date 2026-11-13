@@ -47,5 +47,7 @@ Unit tests: `web/test/camera` (geometry, zoom). The browser smoke test covers th
 
 - `getUserMedia` needs HTTPS (or localhost). On a phone, test on the deployed URL.
 - In-app browsers (WeChat and others) may block the live camera; the file inputs are the fallback.
+- Curved pages lose words: the detector reads straight lines best, so photograph pages as flat as possible.
+- Dense text (menus) gives crowded, overlapping boxes, mostly from `Intl.Segmenter` cutting phrases into short pieces. Candidate fixes: skip stop words, merge short neighbours.
 - Tapping a box only highlights it and shows its word. The popup arrives in M2.
 - The key-word outline size is set per box with a CSS variable; keep it when restyling.
