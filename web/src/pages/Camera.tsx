@@ -8,6 +8,7 @@ import { ModelStatus } from "../camera/ModelStatus.tsx";
 import { captureFrame, toOcrBitmap } from "../camera/photo.ts";
 import { PhotoPickers } from "../camera/PhotoPickers.tsx";
 import { PhotoView } from "../camera/PhotoView.tsx";
+import { StartCamera } from "../camera/StartCamera.tsx";
 import { Viewfinder } from "../camera/Viewfinder.tsx";
 import { getLang } from "../lang/index.ts";
 import { recognize } from "../ocr/engine.ts";
@@ -29,7 +30,8 @@ export function Camera() {
   const [lang, setLang] = useLang();
   const progress = useWarmUp(lang);
   const [phase, setPhase] = useState<Phase>({ kind: "live" });
-  const [camera, setCamera] = useState<"starting" | "live" | "unavailable">("starting");
+  // The camera stays off until the user taps the camera icon
+  const [camera, setCamera] = useState<"off" | "starting" | "live" | "unavailable">("off");
   const [selected, setSelected] = useState<TieredBox | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const newest = useRef(0); // only the latest read may update the screen
@@ -83,7 +85,8 @@ export function Camera() {
     if (currentUrl.current) URL.revokeObjectURL(currentUrl.current);
     currentUrl.current = null;
     setSelected(null);
-    setCamera((c) => (c === "unavailable" ? c : "starting"));
+    // Already switched on once: the viewfinder comes straight back
+    setCamera((c) => (c === "off" || c === "unavailable" ? c : "starting"));
     setPhase({ kind: "live" });
   };
 
@@ -106,7 +109,9 @@ export function Camera() {
 
       <div className="screen">
         {phase.kind === "live" ? (
-          camera === "unavailable" ? (
+          camera === "off" ? (
+            <StartCamera onStart={() => setCamera("starting")} />
+          ) : camera === "unavailable" ? (
             <p className="hint">The live camera isn't available here. Use the buttons below to add a photo.</p>
           ) : (
             <Viewfinder videoRef={videoRef} onReady={onReady} onUnavailable={onUnavailable} />

@@ -43,7 +43,7 @@ The app has three screens: Camera (home), Word bank, and a small Settings sheet.
 
 **Camera (home)**
 
-- Full-screen rear-camera viewfinder (`getUserMedia`), one large shutter button, a language chip (FR / 中文) top-left, a word-bank icon top-right.
+- Full-screen rear-camera viewfinder (`getUserMedia`) that starts only when the user taps the camera icon on the black camera box (so no permission prompt on open), one large shutter button, a language chip (FR / 中文) top-left, a word-bank icon top-right.
 - Fallback: if the browser blocks live camera access (some in-app browsers), show a "Take photo" button using `<input type="file" accept="image/*" capture="environment">`, plus "Choose from gallery".
 - After the shutter: the frame freezes, a spinner shows "Reading text…", then boxes are drawn over every word. A "Retake" button returns to the viewfinder. Pinch to zoom on the frozen photo.
 
