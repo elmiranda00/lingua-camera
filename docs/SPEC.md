@@ -126,7 +126,7 @@ Both languages share one pipeline (photo → OCR → word boxes → tiers → ta
 
 **Saved-word matching, French detail.** Inflected forms only match after they have been looked up once: each lookup records the surface form against its headword, and saving keeps the list. So *mangeaient* shades grey once it is saved; *mangerons* shades only after it is tapped and its headword turns out to be *manger*. Good enough for v1.
 
-**Speech fallback.** If the phone has no voice for the language, the 🔊 button calls `/api/tts` (MeloTTS on Workers AI) and caches the audio on the device. The first deploy confirms whether MeloTTS on Workers AI supports Chinese; if it does not, the button is hidden on phones without a Chinese voice.
+**Speech fallback.** If the phone has no voice for the language, the 🔊 button calls `/api/tts` (MeloTTS on Workers AI) and caches the audio on the device. MeloTTS on Workers AI does speak Chinese, but it is unreliable on very short input: a bare two-character word came back as a breath. **To validate in M2:** for Chinese, test sending the word twice (`出口，出口。`, which tested correctly) or a carrier phrase, across more words; if neither is reliable, the button is hidden on phones without a Chinese voice.
 
 **Pinyin from two sources.** The model also returns pinyin. The app shows the `pinyin-pro` result and logs any disagreement, which becomes a test case for the eval set.
 

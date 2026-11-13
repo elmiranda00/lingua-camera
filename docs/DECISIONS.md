@@ -35,21 +35,38 @@ Newest first. Format: **Date · Decision**, then why and what it affects.
 - **Why:** a correct but slightly long reply shouldn't become a "Couldn't translate" error.
 - **Affects:** `shared/src/schemas.ts`, `worker/prompts/lookup.v1.md`, the popup layout (M2).
 
+## 2026-11-13 · MeloTTS speaks Chinese, but not reliably on single words
+
+- **Decision:** keep `speechSynthesis` as the primary voice. MeloTTS stays as the fallback, and
+  its Chinese use is **to be validated in M2** (deferred).
+- **Why:** checked on the live Worker by transcribing the audio with Whisper. A full sentence
+  (`出口在左边。`) came back exact; French "bonjour" too. A bare `出口` came back as a breath
+  (heard as "Oh" / "好"). `出口，出口。` and carrier phrases (`这是出口。`) transcribed correctly;
+  `谢谢` worked bare, so it varies by word. Speech took ~3 s for a short sentence.
+- **Open (M2):** pick a rule for short Chinese words (send the word twice, or a carrier phrase)
+  and test it on more words, ideally with the China user listening. If none is reliable, hide
+  🔊 on phones without a Chinese voice.
+- **Affects:** `worker/src/routes/tts.ts`, the web audio player (M2).
+
 ## 2026-11-12 · Speech fallback returns MP3
 
 - **Decision:** `POST /api/tts` returns `audio/mpeg`, not `audio/wav` as first specced.
-- **Why:** MeloTTS on Workers AI returns MP3; converting adds work for no benefit.
+- **Why:** MeloTTS on Workers AI returns MP3 (confirmed 2026-11-13: the files play and transcribe);
+  converting adds work for no benefit.
 - **Affects:** `worker/src/routes/tts.ts`, the web audio player and its on-device cache (M2).
 
-## 2026-11-12 · Qwen3 thinking off; JSON mode pending
+## 2026-11-12 · Qwen3 thinking off (verified); JSON mode not used
 
 - **Decision:** thinking is turned off with Qwen3's `/no_think` switch, and any stray
-  `<think>` block is stripped before parsing. JSON mode is not used yet; replies are parsed
+  `<think>` block is stripped before parsing. JSON mode is not used; replies are parsed
   tolerantly and always validated with Zod.
-- **Why:** thinking adds seconds per lookup (target p50 < 2 s). Neither JSON-mode support nor
-  `/no_think` is confirmed for this model on Workers AI.
-- **Affects:** `worker/src/lib/model.ts`. **First deploy to verify:** lookup timings show thinking is off,
-  and whether JSON mode works. Update this entry with the result.
+- **Why:** thinking adds seconds per lookup (target p50 < 2 s).
+- **Verified 2026-11-13 on the live Worker:** `model_ms` 707 and 1 attempt for a Chinese lookup;
+  four test lookups returned valid output (500–800 ms round trip from France). Thinking is off.
+  JSON mode isn't needed so far; revisit if retries (`attempts` 2) show up in the logs.
+- **Observed:** `otherMeanings` returned English inflections ("eat", "ate", "eating") instead of
+  other senses. Fix with a new `lookup.v2` prompt in M2; don't edit v1.
+- **Affects:** `worker/src/lib/model.ts`, `worker/prompts/`.
 
 ## 2026-11-11 · Hosting stays on Cloudflare; `workers.dev` until the domain
 
