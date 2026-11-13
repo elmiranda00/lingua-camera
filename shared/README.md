@@ -19,6 +19,7 @@ request limits. Both `web` and `worker` import from here, so the contract is def
 | --- | --- |
 | `src/schemas.ts` | Zod schemas: `Lang`, `ApiError`, `Health`, `LookupRequest`, `LookupResult`, `LookupResponse`, `TtsRequest` |
 | `src/limits.ts` | Numbers from the spec's limits table (lengths, body size, daily caps) |
+| `src/browser-setup.ts` | Side-effect import for the web app: turns off Zod's `eval` probe |
 | `src/index.ts` | Public exports |
 
 ## Interfaces
@@ -29,6 +30,7 @@ Import everything from `@lingua-camera/shared`:
 import { LookupRequest, LIMITS, type LookupResult } from "@lingua-camera/shared";
 ```
 
+The web app also imports `@lingua-camera/shared/browser-setup` first (see Gotchas).
 The package ships TypeScript source (no build step); Vite and Wrangler compile it.
 
 ## Running and testing
@@ -43,3 +45,5 @@ npm run typecheck -w @lingua-camera/shared
 - Changing a schema changes the API contract for both sides. If a change affects
   stored data or the model prompt, note it in `docs/DECISIONS.md`.
 - `worker/src/limits.ts` re-exports `LIMITS`; change the values here.
+- Zod decides how to validate while each schema is built, so `browser-setup` must load
+  before `schemas.ts`. The CSP forbids `eval`, which Zod would otherwise probe for.
