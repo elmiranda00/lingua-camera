@@ -14,5 +14,6 @@ export const routes: RouteObject[] = [
     HydrateFallback: Loading,
     ErrorBoundary: RouteError,
   },
+  { path: "/ocr-test", lazy: async () => ({ Component: (await import("./pages/OcrTest.tsx")).OcrTest }) },
   { path: "*", Component: NotFound },
 ];

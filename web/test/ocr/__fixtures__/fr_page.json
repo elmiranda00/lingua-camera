@@ -1,0 +1,28 @@
+{
+  "image": {"width":900,"height":1600},
+  "items": [
+    {"text":"PROLOGUE PREMIER","score":0.993,"poly":[[319,306],[644,318],[643,353],[318,341]]},
+    {"text":"La lumière pleut sur ses yeux fermés, sur son corps","score":0.989,"poly":[[167,506],[825,516],[824,550],[167,540]]},
+    {"text":"allongé au cœur arrêté.","score":0.977,"poly":[[136,544],[412,546],[412,573],[136,571]]},
+    {"text":"Autour de lui, le dernier jour de la guerre jonche le sol","score":0.99,"poly":[[164,575],[830,582],[829,616],[164,609]]},
+    {"text":"de dépouilles par milliers, déposées à la surface de la neige","score":0.999,"poly":[[131,609],[831,617],[830,650],[130,642]]},
+    {"text":"rouge.","score":1,"poly":[[128,650],[210,650],[210,679],[128,679]]},
+    {"text":"Il n'est personne parmi les autres. Ni plus précieux, ni","score":0.986,"poly":[[157,679],[837,686],[836,720],[157,713]]},
+    {"text":"plus important. Mais ailleurs, il pourrait être un père, un","score":0.999,"poly":[[125,716],[838,721],[838,755],[124,750]]},
+    {"text":"frère, un ami ou un mari. Ailleurs, il est tout.","score":0.981,"poly":[[124,752],[669,756],[669,787],[123,783]]},
+    {"text":"Dans la mort, seuls leurs uniformes les distinguent. Ils","score":0.992,"poly":[[154,786],[842,793],[842,826],[154,819]]},
+    {"text":"étaient ennemis, ils sont désormais allongés côté à côte. Ici,","score":0.994,"poly":[[121,826],[844,830],[844,860],[120,856]]},
+    {"text":"leurs mains se touchent, là, leurs visages éteints se font face.","score":0.989,"poly":[[117,863],[848,865],[848,899],[116,897]]},
+    {"text":"Voilà tout un hiver qu'ils s'entretuent.","score":0.991,"poly":[[151,901],[620,903],[620,934],[151,932]]},
+    {"text":"Les cadavres des semaines passées sont enfouis à moitié","score":0.996,"poly":[[149,939],[853,940],[853,971],[149,970]]},
+    {"text":"dans le sol. Vestiges, on voit encore leur casque, parfois","score":0.978,"poly":[[112,977],[857,979],[857,1013],[111,1011]]},
+    {"text":"un peu de leur dos, on voit encore leurs bras en racines","score":0.995,"poly":[[109,1016],[860,1014],[860,1051],[110,1053]]},
+    {"text":"aériennes, comme s'ils poussaient de la terre même, prêts","score":0.997,"poly":[[108,1060],[860,1058],[860,1089],[109,1091]]},
+    {"text":"à revenir, se relever et hanter ceux qui ont décidé de cette","score":0.988,"poly":[[104,1098],[864,1095],[864,1128],[105,1131]]},
+    {"text":"guerre.","score":1,"poly":[[100,1141],[200,1138],[201,1174],[101,1177]]},
+    {"text":"Ils gorgent le sol de leur sang, nourrissent les arbres de","score":0.988,"poly":[[135,1180],[870,1175],[870,1212],[135,1217]]},
+    {"text":"leur chair et se mélangent à leur sève. Ils seront dans chaque","score":0.987,"poly":[[97,1220],[874,1218],[874,1255],[97,1257]]},
+    {"text":"nouvelle feuille, dans chaque nouveau bourgeon.","score":1,"poly":[[97,1264],[744,1262],[744,1296],[98,1298]]},
+    {"text":"13","score":1,"poly":[[473,1363],[506,1363],[506,1395],[473,1395]]}
+  ]
+}
