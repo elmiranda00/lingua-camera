@@ -31,6 +31,7 @@ app's hashed files, so the ~30 MB download happens once. `npm run assets` puts t
 | `src/pages/` | `Camera` (home), `About`, `NotFound`, `Loading`, `RouteError`, `aboutLoader` |
 | `src/camera/` | Camera page pieces: viewfinder, photo view, word boxes, zoom. See its README |
 | `public/sw.js` | Service worker: caches OCR files and the app |
+| `public/manifest.webmanifest`, icons | Makes the app installable (Add to Home Screen). Icons are made by `../scripts/make-icons.mjs` |
 | `src/api/client.ts` | API client: validation, typed errors, 10 s timeout, request-ID logging |
 | `src/ocr/` | On-phone OCR in a Web Worker, model download with progress. See its README |
 | `src/lang/` | Per-language modules (word splitting, word boxes, key-word rule). See its README |
@@ -101,6 +102,7 @@ Planned for M2, not installed yet:
   and fetches a `data:` URL, both blocked by the CSP. The patch swaps them for plain functions. The CSP
   stays strict. A unit test fails if an OpenCV update stops the patch from matching.
 - **Models served from our origin**, downloaded at build time and checked against pinned SHA-256 hashes.
+- **Installable app:** a manifest (standalone, black theme) and icons, so it opens like an app from the home screen.
 - **Hand-written service worker (about 60 lines), no PWA plugin:** it only needs cache-first for model and hashed files and network-first for pages. One less dependency to pin and review.
 - **Multi-threaded OCR** via cross-origin isolation headers set by the Worker; falls back to one thread if they are missing.
 

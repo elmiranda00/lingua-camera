@@ -34,9 +34,12 @@ test("app loads on one origin with no CSP violations or errors", async ({ page, 
   const collectViolations = async () =>
     violations.push(...(await page.evaluate(() => (window as unknown as WithCsp).__csp)));
 
-  await test.step("camera page loads (no camera in the test browser, so the photo buttons show)", async () => {
+  await test.step("camera page loads with the camera off, until the icon is tapped", async () => {
     await page.goto("/");
     await expect(page.getByRole("heading", { name: "Lingua Camera" })).toBeAttached();
+    await expect(page.getByRole("button", { name: "Start camera" })).toBeVisible();
+    // No camera in the test browser: starting it falls back to the photo buttons
+    await page.getByRole("button", { name: "Start camera" }).click();
     await expect(page.getByText("The live camera isn't available here")).toBeVisible();
     await expect(page.getByRole("button", { name: /Language: French/ })).toBeVisible();
     await collectViolations();
@@ -76,6 +79,14 @@ test("app loads on one origin with no CSP violations or errors", async ({ page, 
     await expect(page.getByRole("status").filter({ hasText: "read in" })).toContainText(label.split(",")[0]!);
     await page.getByRole("button", { name: "Retake" }).click();
     await expect(page.getByText("The live camera isn't available here")).toBeVisible();
+  });
+
+  await test.step("the app manifest and icons are served", async () => {
+    const manifest = await page.request.get("/manifest.webmanifest");
+    expect(manifest.ok()).toBe(true);
+    for (const icon of (await manifest.json()).icons as { src: string }[]) {
+      expect((await page.request.get(icon.src)).ok(), icon.src).toBe(true);
+    }
   });
 
   await test.step("the service worker has cached the OCR files", async () => {

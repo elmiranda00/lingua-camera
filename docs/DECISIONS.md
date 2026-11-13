@@ -11,9 +11,10 @@ Newest first. Format: **Date · Decision**, then why and what it affects.
   4.3 s (186-line menu). One thread misses the under-4 s target.
 - **Affects:** every response (`worker/src/security.ts`). Anything loaded from another origin (images, scripts, embeds) is now blocked unless it opts in. We load none. The CSP is unchanged.
 
-## 2026-11-13 · Camera is the home page; offline files via a hand-written service worker
+## 2026-11-13 · Camera is the home page, off until tapped; installable; offline files via a hand-written service worker
 
-- **Decision:** `/` is the camera page with no loader (the API version moved to `/about`);
+- **Decision:** `/` is the camera page with no loader (the API version moved to `/about`); the
+  camera starts only when the user taps the camera icon; a manifest and icons make it installable;
   `public/sw.js` caches the OCR files and app files; no PWA plugin.
 - **Why:** the camera must show at once and work without the API; the first run downloads ~30 MB, which must happen once, and models must survive a flaky connection.
 - **Affects:** `web/src/routes.tsx`, `web/public/sw.js`. Bump the cache name in `sw.js` when a model or runtime file changes.
