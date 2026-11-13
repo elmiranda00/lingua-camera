@@ -13,6 +13,9 @@ export const CSP = [
 
 export const SECURITY_HEADERS: Readonly<Record<string, string>> = {
   "Content-Security-Policy": CSP,
+  // Cross-origin isolation: lets the OCR use several threads (SharedArrayBuffer). Safe because every file is same-origin.
+  "Cross-Origin-Opener-Policy": "same-origin",
+  "Cross-Origin-Embedder-Policy": "require-corp",
   "Permissions-Policy": "camera=(self)",
   "X-Content-Type-Options": "nosniff",
   "Referrer-Policy": "no-referrer",

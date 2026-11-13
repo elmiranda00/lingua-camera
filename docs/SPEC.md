@@ -113,7 +113,7 @@ Both languages share one pipeline (photo → OCR → word boxes → tiers → ta
 
 | Step | French | Mandarin (Simplified) |
 | --- | --- | --- |
-| Image prep | Downscale to 1600 px on the long side, JPEG quality 0.85, keep the original for display | Same |
+| Image prep | Downscale to 1600 px on the long side for OCR (never upscale); the original is kept for display. Frames from the live camera are captured as JPEG quality 0.85 | Same |
 | OCR models | `PP-OCRv5_mobile_det` + `latin_PP-OCRv5_mobile_rec` | `PP-OCRv5_mobile_det` + `PP-OCRv5_mobile_rec` (also reads English and pinyin on signs) |
 | Line → words | `Intl.Segmenter('fr', {granularity:'word'})`; elisions split (`l'` + `homme`), hyphenated compounds kept whole | `Intl.Segmenter('zh', {granularity:'word'})` on the line text |
 | Word boxes | Line box split by estimated character widths (approximate); PaddleOCR.js does not expose per-character positions | Han characters are evenly spaced (digits and Latin letters count as narrower); a word box is the union of its characters. Vertical lines (height > 2× width) split top to bottom |

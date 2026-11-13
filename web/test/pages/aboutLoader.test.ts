@@ -1,15 +1,15 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { homeLoader } from "../../src/pages/homeLoader.ts";
+import { aboutLoader } from "../../src/pages/aboutLoader.ts";
 
 afterEach(() => {
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });
 
-describe("homeLoader", () => {
+describe("aboutLoader", () => {
   it("returns the API version", async () => {
     vi.stubGlobal("fetch", async () => Response.json({ ok: true, version: "v9" }));
-    await expect(homeLoader()).resolves.toEqual({ version: "v9" });
+    await expect(aboutLoader()).resolves.toEqual({ version: "v9" });
   });
 
   it("returns null instead of throwing when the API is unreachable", async () => {
@@ -17,6 +17,6 @@ describe("homeLoader", () => {
     vi.stubGlobal("fetch", async () => {
       throw new TypeError("Failed to fetch");
     });
-    await expect(homeLoader()).resolves.toEqual({ version: null });
+    await expect(aboutLoader()).resolves.toEqual({ version: null });
   });
 });

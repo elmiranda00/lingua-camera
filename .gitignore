@@ -48,3 +48,5 @@ fixtures/
 
 # Raw word-list downloads
 .cache/
+web/public/ocr-assets.json
+web/public/ocr-assets.json

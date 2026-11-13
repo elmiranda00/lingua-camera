@@ -47,6 +47,9 @@ describe("GET /api/health", () => {
     expect(res.headers.get("x-request-id")).toMatch(/^[0-9a-f-]{36}$/);
     expect(res.headers.get("content-security-policy")).toBe(CSP);
     expect(res.headers.get("permissions-policy")).toBe("camera=(self)");
+    // Cross-origin isolation for multi-threaded OCR
+    expect(res.headers.get("cross-origin-opener-policy")).toBe("same-origin");
+    expect(res.headers.get("cross-origin-embedder-policy")).toBe("require-corp");
   });
 });
 

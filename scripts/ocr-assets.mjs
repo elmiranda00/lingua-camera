@@ -2,7 +2,7 @@
 /* global console, fetch, Buffer */
 // Models are checked against pinned SHA-256 hashes. Change a hash only on purpose.
 import { createHash } from "node:crypto";
-import { copyFile, mkdir, readFile, rename, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, readFile, rename, stat, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -47,3 +47,9 @@ for (const file of ORT_FILES) {
     join(publicDir, "ort", file),
   );
 }
+
+// File sizes for the download progress bar (served as /ocr-assets.json)
+const sizes = {};
+for (const name of Object.keys(MODELS)) sizes[`/models/${name}.tar`] = (await stat(join(publicDir, "models", `${name}.tar`))).size;
+for (const file of ORT_FILES) sizes[`/ort/${file}`] = (await stat(join(publicDir, "ort", file))).size;
+await writeFile(join(publicDir, "ocr-assets.json"), `${JSON.stringify(sizes, null, 1)}\n`);
