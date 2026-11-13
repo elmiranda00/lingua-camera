@@ -10,12 +10,13 @@ const MODELS: Record<Lang, { det: string; rec: string }> = {
 };
 
 type Engine = Awaited<ReturnType<typeof PaddleOCR.create>>;
-const engines = new Map<Lang, Promise<Engine>>();
+const engines = new Map<string, Promise<Engine>>();
 
 const asset = (name: string) => ({ url: new URL(`/models/${name}.tar`, self.location.origin).href });
 
-function engine(lang: Lang): Promise<Engine> {
-  let e = engines.get(lang);
+function engine(lang: Lang, threads: number): Promise<Engine> {
+  const key = `${lang}:${threads}`;
+  let e = engines.get(key);
   if (!e) {
     const { det, rec } = MODELS[lang];
     e = PaddleOCR.create({
@@ -25,10 +26,10 @@ function engine(lang: Lang): Promise<Engine> {
       textDetectionModelAsset: asset(det),
       textRecognitionModelAsset: asset(rec),
       // wasmPaths must be set: the library's default is a CDN
-      ortOptions: { backend: "wasm", wasmPaths: "/ort/", numThreads: 1 },
+      ortOptions: { backend: "wasm", wasmPaths: "/ort/", numThreads: threads },
     });
-    e.catch(() => engines.delete(lang));
-    engines.set(lang, e);
+    e.catch(() => engines.delete(key));
+    engines.set(key, e);
   }
   return e;
 }
@@ -44,7 +45,7 @@ function toMat(image: ImageBitmap): cv.Mat {
 }
 
 async function handle(req: OcrRequest): Promise<OcrResponse> {
-  const ocr = await engine(req.lang);
+  const ocr = await engine(req.lang, req.threads);
   if (req.type === "load") return { id: req.id, ok: true };
   const mat = toMat(req.image);
   try {

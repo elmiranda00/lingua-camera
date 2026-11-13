@@ -1,11 +1,12 @@
 // Web build (output: web/dist, served by the Worker)
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
+import { dropOrtWasm } from "./vite-plugins/dropOrtWasm.ts";
 import { opencvCsp } from "./vite-plugins/opencvCsp.ts";
 
 export default defineConfig({
-  plugins: [react(), opencvCsp()],
-  worker: { format: "es", plugins: () => [opencvCsp()] },
+  plugins: [react(), opencvCsp(), dropOrtWasm()],
+  worker: { format: "es", plugins: () => [opencvCsp(), dropOrtWasm()] },
   // WASM-only ONNX Runtime: the default build also ships a 29 MB WebGPU file (over the 25 MiB asset limit)
   resolve: { alias: { "onnxruntime-web": "onnxruntime-web/wasm" } },
   server: {

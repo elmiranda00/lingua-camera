@@ -21,7 +21,7 @@ on one origin. It calls Workers AI for lookups and speech, and holds the D1 data
 | `src/routes/` | `health`, `lookup`, `tts` |
 | `src/llm.ts` | LLM settings: live prompt, temperature, max tokens, retries |
 | `src/lib/model.ts` | Calls the model, parses and validates the reply |
-| `src/security.ts` | CSP and other security headers |
+| `src/security.ts` | CSP, cross-origin isolation and other security headers |
 | `src/lib/auth.ts` | M0 shared test token |
 | `src/lib/body.ts`, `errors.ts`, `log.ts` | Body reading, error envelope, structured logs |
 | `src/limits.ts` | Request limits (values live in `shared/src/limits.ts`) |
@@ -56,6 +56,7 @@ npm run db:migrate:local
 
 - **One Worker for API and web.** One origin, so no CORS and the CSP can forbid every other host.
 - **Static files also go through the Worker** (`run_worker_first`), so the CSP covers every page.
+- **Cross-origin isolation headers on every response** (COOP `same-origin`, COEP `require-corp`) so the on-phone OCR can use several threads. They don't loosen the CSP; they only work because every file is same-origin. A third-party embed or image would now be blocked.
 - **Model output is never trusted.** Always Zod-validated; one retry, then a typed `502`.
 - **Qwen3 thinking is off** (`/no_think`). Unverified on Workers AI; the first deploy checks the timings.
 - **Logs never contain words, sentences or tokens.**

@@ -2,8 +2,8 @@
 
 ## Purpose
 
-The phone app: React + Vite, built to static files that the Worker serves. Today it has a
-placeholder home page and a temporary `/ocr-test` page; M1 turns it into the camera.
+The phone app: React + Vite, built to static files that the Worker serves. The home page is the
+camera: take or pick a photo, read it on the phone, and get a tappable box on every word.
 
 ## How it works
 
@@ -14,10 +14,12 @@ placeholder home page and a temporary `/ocr-test` page; M1 turns it into the cam
    and throws a typed error on any failure.
 5. A page that fails to load shows the route's error page instead of a blank screen.
 
-**OCR** (see `src/ocr/`): the page sends the photo to a Web Worker (`ocr.worker.ts`), which runs
-PaddleOCR: detection finds text lines, recognition reads them. It returns one polygon, text and
-score per **line**. The worker loads the models (`/models/*.tar`) and the ONNX Runtime WASM
-(`/ort/`) from our own origin. `npm run assets` puts them in `public/` before dev and build.
+**The camera page** (see `src/camera/`): shutter → photo shrunk to 1600 px → OCR in a Web Worker
+(see `src/ocr/`) → one polygon and text per **line** → `src/lang/` splits lines into word boxes →
+`src/tiers/` marks each Saved, Key or Normal → boxes are drawn over the photo.
+
+**Offline files:** a service worker (`public/sw.js`) caches the OCR models, the ONNX Runtime and the
+app's hashed files, so the ~30 MB download happens once. `npm run assets` puts them in `public/`.
 
 ## Key files
 
@@ -26,15 +28,14 @@ score per **line**. The worker loads the models (`/models/*.tar`) and the ONNX R
 | `src/main.tsx` | Entry point |
 | `src/App.tsx` | Creates the browser router |
 | `src/routes.tsx` | Route table: loader, loading page and error page per route |
-| `src/pages/` | `Home`, `NotFound`, `Loading`, `RouteError`, `homeLoader` |
+| `src/pages/` | `Camera` (home), `About`, `NotFound`, `Loading`, `RouteError`, `aboutLoader` |
+| `src/camera/` | Camera page pieces: viewfinder, photo view, word boxes, zoom. See its README |
+| `public/sw.js` | Service worker: caches OCR files and the app |
 | `src/api/client.ts` | API client: validation, typed errors, 10 s timeout, request-ID logging |
-| `src/ocr/engine.ts` | Page side of OCR: `loadOcr(lang)`, `recognize(lang, image)` |
-| `src/ocr/ocr.worker.ts` | OCR Web Worker: one PaddleOCR engine per language |
-| `src/ocr/protocol.ts` | Messages between page and worker |
+| `src/ocr/` | On-phone OCR in a Web Worker, model download with progress. See its README |
 | `src/lang/` | Per-language modules (word splitting, word boxes, key-word rule). See its README |
 | `src/tiers/` | Saved / Key / Normal tier rules and the word lists. See its README |
-| `src/pages/OcrTest.tsx` | Temporary: pick a photo, see line boxes and timings (removed with the camera page) |
-| `vite-plugins/opencvCsp.ts` | Build-time patch so OpenCV.js runs under our CSP (see Design choices) |
+| `vite-plugins/` | `opencvCsp.ts`: build-time patch so OpenCV.js runs under our CSP. `dropOrtWasm.ts`: leaves out a duplicate 15 MB WASM file |
 | `../scripts/ocr-assets.mjs` | Downloads the models (hash-checked) and copies the ORT WASM into `public/` (gitignored) |
 | `vite.config.ts` | Build to `dist/`; in dev, forwards `/api` to the local Worker |
 | `test/` | Unit tests, mirroring `src/` |
@@ -45,8 +46,8 @@ score per **line**. The worker loads the models (`/models/*.tar`) and the ONNX R
 
 | Route | Page |
 | --- | --- |
-| `/` | Home: shows the API version |
-| `/ocr-test` | Temporary OCR check |
+| `/` | Camera |
+| `/about` | Shows the API version |
 | `*` | Page not found |
 
 API client (`src/api/client.ts`): `api.getHealth()`. Errors are `ApiRequestError` with
@@ -82,12 +83,11 @@ Word lists (data, not packages): Lexique 3.83 (CC BY-SA 4.0) and HSK 3.0 levels 
 OCR models (not npm packages, fetched by `scripts/ocr-assets.mjs`): PP-OCRv5 mobile detection,
 Chinese recognition and Latin recognition (Apache-2.0, PaddlePaddle).
 
-Planned for M1, not installed yet:
+Planned for M2, not installed yet:
 
 | Package | Licence | Why |
 | --- | --- | --- |
 | pinyin-pro | MIT | Pinyin for Chinese |
-| vite-plugin-pwa | MIT | Service worker that caches the OCR models |
 
 ## Design choices
 
@@ -101,10 +101,14 @@ Planned for M1, not installed yet:
   and fetches a `data:` URL, both blocked by the CSP. The patch swaps them for plain functions. The CSP
   stays strict. A unit test fails if an OpenCV update stops the patch from matching.
 - **Models served from our origin**, downloaded at build time and checked against pinned SHA-256 hashes.
+- **Hand-written service worker (about 60 lines), no PWA plugin:** it only needs cache-first for model and hashed files and network-first for pages. One less dependency to pin and review.
+- **Multi-threaded OCR** via cross-origin isolation headers set by the Worker; falls back to one thread if they are missing.
 
 ## Gotchas
 
-- A loader blocks the page until it finishes (up to the 10 s timeout). Don't make the M1 camera route wait on an API call.
+- A loader blocks the page until it finishes (up to the 10 s timeout). The camera route has none, and must stay that way.
+- The camera needs HTTPS. Test on a phone against the deployed URL, not a LAN address.
+- The service worker only registers in production builds.
 - `npm run dev` needs a Cloudflare login, because the Worker's AI binding is remote.
 - The Worker only serves what's in `web/dist`; build before `wrangler dev` or deploy.
 - Check layouts at 375 px wide.

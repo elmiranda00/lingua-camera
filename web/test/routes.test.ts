@@ -3,8 +3,16 @@ import { matchRoutes } from "react-router";
 import { routes } from "../src/routes.tsx";
 
 describe("routes", () => {
-  it("matches / to the home route", () => {
-    expect(matchRoutes(routes, "/")?.[0]?.route.path).toBe("/");
+  it("matches / to the camera route, which has no loader", () => {
+    const route = matchRoutes(routes, "/")?.[0]?.route;
+    expect(route?.path).toBe("/");
+    expect(route?.loader).toBeUndefined();
+  });
+
+  it("matches /about to the route that loads the API version", () => {
+    const route = matchRoutes(routes, "/about")?.[0]?.route;
+    expect(route?.path).toBe("/about");
+    expect(route?.loader).toBeDefined();
   });
 
   it("sends unknown paths to the not-found route", () => {

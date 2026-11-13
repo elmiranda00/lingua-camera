@@ -1,12 +1,14 @@
 // Browser smoke test
 //
-// The built app, served by the Worker, loads on one origin with no CSP violations or console errors
+// The built app, served by the Worker, on one origin with no CSP violations or console errors:
+// camera page, a photo read by the on-device OCR, word boxes, cached OCR files, and the other pages
 import { expect, test } from "@playwright/test";
 
 type WithCsp = { __csp: string[] };
 
 test("app loads on one origin with no CSP violations or errors", async ({ page, baseURL }) => {
   if (!baseURL) throw new Error("baseURL is not set");
+  test.setTimeout(180_000); // first run downloads and loads ~25 MB of OCR files
   const ownOrigin = new URL(baseURL).origin;
 
   const violations: string[] = [];
@@ -20,7 +22,8 @@ test("app loads on one origin with no CSP violations or errors", async ({ page, 
     );
   });
   page.on("console", (m) => {
-    if (m.type() === "error") errors.push(m.text());
+    // ONNX Runtime prints harmless warnings about unused model weights through console.error
+    if (m.type() === "error" && !m.text().includes("onnxruntime")) errors.push(m.text());
   });
   page.on("pageerror", (e) => errors.push(String(e)));
   page.on("request", (r) => {
@@ -31,8 +34,66 @@ test("app loads on one origin with no CSP violations or errors", async ({ page, 
   const collectViolations = async () =>
     violations.push(...(await page.evaluate(() => (window as unknown as WithCsp).__csp)));
 
-  await test.step("home page shows the API version from the loader", async () => {
+  await test.step("camera page loads (no camera in the test browser, so the photo buttons show)", async () => {
     await page.goto("/");
+    await expect(page.getByRole("heading", { name: "Lingua Camera" })).toBeAttached();
+    await expect(page.getByText("The live camera isn't available here")).toBeVisible();
+    await expect(page.getByRole("button", { name: /Language: French/ })).toBeVisible();
+    await collectViolations();
+  });
+
+  await test.step("a photo is read on the device and every word gets a box", async () => {
+    // Draw a French sentence, then add it like a gallery photo
+    const png = await page.evaluate(() => {
+      const canvas = document.createElement("canvas");
+      canvas.width = 900;
+      canvas.height = 300;
+      const g = canvas.getContext("2d")!;
+      g.fillStyle = "#fff";
+      g.fillRect(0, 0, 900, 300);
+      g.fillStyle = "#000";
+      g.font = "bold 56px Arial, Helvetica, sans-serif";
+      g.fillText("Le petit chat dort.", 40, 120);
+      g.fillText("Il fait beau aujourd'hui.", 40, 220);
+      return canvas.toDataURL("image/png").split(",")[1]!;
+    });
+    await page
+      .locator("label", { hasText: "Choose from gallery" })
+      .locator("input")
+      .setInputFiles({ name: "page.png", mimeType: "image/png", buffer: Buffer.from(png, "base64") });
+    const boxes = page.locator("button.word");
+    await expect(boxes.first()).toBeVisible({ timeout: 150_000 });
+    expect(await boxes.count()).toBeGreaterThanOrEqual(5);
+    await expect(page.getByText(/read in \d+\.\d s/)).toBeVisible();
+    await collectViolations();
+  });
+
+  await test.step("tapping a box selects it, and Retake goes back", async () => {
+    const first = page.locator("button.word").first();
+    const label = (await first.getAttribute("aria-label")) ?? "";
+    await first.click();
+    await expect(first).toHaveAttribute("aria-pressed", "true");
+    await expect(page.getByRole("status").filter({ hasText: "read in" })).toContainText(label.split(",")[0]!);
+    await page.getByRole("button", { name: "Retake" }).click();
+    await expect(page.getByText("The live camera isn't available here")).toBeVisible();
+  });
+
+  await test.step("the service worker has cached the OCR files", async () => {
+    const cached = await page.evaluate(async () => {
+      const cache = await caches.open("lc-models-v1");
+      return (await cache.keys()).map((r) => new URL(r.url).pathname);
+    });
+    expect(cached).toEqual(
+      expect.arrayContaining([
+        "/ort/ort-wasm-simd-threaded.wasm",
+        "/models/PP-OCRv5_mobile_det.tar",
+        "/models/latin_PP-OCRv5_mobile_rec.tar",
+      ]),
+    );
+  });
+
+  await test.step("the about page shows the API version from the loader", async () => {
+    await page.goto("/about");
     await expect(page.getByRole("heading", { name: "Lingua Camera" })).toBeVisible();
     await expect(page.getByText("API smoke")).toBeVisible();
     await collectViolations();

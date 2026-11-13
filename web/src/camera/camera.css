@@ -1,0 +1,297 @@
+/* Camera page: mobile first (375 px), full screen */
+html:has(.camera),
+body:has(.camera),
+body:has(.camera) #root {
+  height: 100%;
+  margin: 0;
+  background: #000;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.camera {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: #000;
+  color: #fff;
+  font-family: system-ui, sans-serif;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+.topbar {
+  position: absolute;
+  top: calc(env(safe-area-inset-top) + 12px);
+  left: calc(env(safe-area-inset-left) + 12px);
+  z-index: 3;
+}
+
+.chip {
+  min-width: 48px;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid rgb(255 255 255 / 60%);
+  border-radius: 22px;
+  background: rgb(0 0 0 / 55%);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.chip:disabled {
+  opacity: 0.5;
+}
+
+.screen {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.viewfinder {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.hint {
+  max-width: 300px;
+  padding: 0 16px;
+  text-align: center;
+  line-height: 1.4;
+}
+
+/* Photo with boxes */
+.stage {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.viewport {
+  position: relative;
+  overflow: hidden;
+  touch-action: none; /* we handle pinch and drag */
+}
+
+.content {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-origin: 0 0;
+}
+
+.photo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* Word boxes: real buttons, positioned and rotated over the photo */
+.word {
+  position: absolute;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: transparent;
+  transform-origin: 0 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.word:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 2px;
+}
+
+/* Normal: thin, light outline (dark edge so it shows on light and dark photos) */
+.word-normal {
+  outline: 1px solid rgb(255 255 255 / 85%);
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 35%);
+}
+
+/* Key: thicker coloured outline, rounded, more padding */
+.word-key {
+  border-radius: 6px;
+  outline: var(--outline, 3px) solid #ff6a00;
+  outline-offset: calc(var(--outline, 3px) * 0.6);
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 35%);
+}
+
+/* Saved: light grey fill, thin grey outline */
+.word-saved {
+  background: rgb(128 128 128 / 25%);
+  outline: 1px solid #808080;
+}
+
+.word-selected {
+  background: rgb(255 235 59 / 40%);
+}
+
+.word-selected:focus-visible {
+  outline-color: #fff;
+}
+
+/* Status and controls */
+.status {
+  position: absolute;
+  top: calc(env(safe-area-inset-top) + 64px);
+  left: 12px;
+  right: 12px;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgb(0 0 0 / 75%);
+  font-size: 14px;
+}
+
+.status progress {
+  width: 100%;
+}
+
+.status-note {
+  opacity: 0.7;
+  font-size: 12px;
+}
+
+.status-error {
+  background: rgb(150 20 20 / 90%);
+}
+
+.reading {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border-radius: 22px;
+  background: rgb(0 0 0 / 75%);
+  font-size: 16px;
+  white-space: nowrap;
+}
+
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 3px solid rgb(255 255 255 / 30%);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation-duration: 3s;
+  }
+}
+
+.controls {
+  position: relative;
+  min-height: 112px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 12px 16px;
+  background: #000;
+}
+
+.pickers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+/* With a shutter: gallery on the left, shutter in the middle */
+.controls-shutter {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+}
+
+.controls-shutter .pickers {
+  justify-content: flex-start;
+}
+
+.controls-shutter .button {
+  min-height: 44px;
+  padding: 0 12px;
+  font-size: 14px;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.shutter {
+  width: 76px;
+  height: 76px;
+  border: 5px solid #fff;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 25%);
+  box-shadow: inset 0 0 0 4px #000;
+}
+
+.shutter:disabled {
+  opacity: 0.4;
+}
+
+.shutter:active:not(:disabled) {
+  background: #fff;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid rgb(255 255 255 / 60%);
+  border-radius: 22px;
+  background: transparent;
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.button-primary {
+  background: #fff;
+  color: #000;
+  font-weight: 600;
+}
+
+.selected {
+  margin: 0;
+  font-size: 15px;
+}
+
+button:focus-visible,
+.button:focus-within {
+  outline: 3px solid #4da3ff;
+  outline-offset: 2px;
+}
