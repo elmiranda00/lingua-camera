@@ -74,3 +74,41 @@ describe("getHealth", () => {
     expect(JSON.stringify(spy.mock.calls)).not.toContain("do-not-log");
   });
 });
+
+describe("getMe and the Bearer token", () => {
+  const TOKEN = "ww_XD96oHXQuxFnP6bdFClnRVou9W4W4bi3WBlB34qI";
+  const me = { id: "u1", name: "Elrich" };
+
+  function sentHeaders(fetchMock: ReturnType<typeof vi.fn>): Headers {
+    return new Headers((fetchMock.mock.calls[0]?.[1] as RequestInit).headers);
+  }
+
+  it("sends the saved token", async () => {
+    const fetchMock = vi.fn(async () => json(me));
+    const client = createApiClient({ fetch: fetchMock as unknown as typeof fetch, getToken: () => TOKEN });
+    await expect(client.getMe()).resolves.toEqual(me);
+    expect(sentHeaders(fetchMock).get("authorization")).toBe(`Bearer ${TOKEN}`);
+  });
+
+  it("sends an explicit token instead of the saved one", async () => {
+    const fetchMock = vi.fn(async () => json(me));
+    const client = createApiClient({ fetch: fetchMock as unknown as typeof fetch, getToken: () => "saved-one" });
+    await client.getMe(TOKEN);
+    expect(sentHeaders(fetchMock).get("authorization")).toBe(`Bearer ${TOKEN}`);
+  });
+
+  it("sends no Authorization header when nothing is saved", async () => {
+    const fetchMock = vi.fn(async () => json({ ok: true, version: "x" }));
+    const client = createApiClient({ fetch: fetchMock as unknown as typeof fetch, getToken: () => null });
+    await client.getHealth();
+    expect(sentHeaders(fetchMock).has("authorization")).toBe(false);
+  });
+
+  it("reports a 401 as an unauthorized error and never logs the token", async () => {
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const envelope = { error: { code: "unauthorized", message: "Missing or invalid token." }, requestId: "r" };
+    const client = createApiClient({ fetch: async () => json(envelope, { status: 401 }), getToken: () => TOKEN });
+    await expect(client.getMe()).rejects.toMatchObject({ code: "unauthorized", status: 401 });
+    expect(JSON.stringify(spy.mock.calls)).not.toContain(TOKEN);
+  });
+});

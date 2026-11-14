@@ -110,6 +110,15 @@ test("app loads on one origin with no CSP violations or errors", async ({ page, 
     await collectViolations();
   });
 
+  await test.step("the sign-in page asks for the invite link, and flags a partial one", async () => {
+    // The smoke Worker has no database, so only the cases that never call the API run here
+    await page.goto("/join");
+    await expect(page.getByText("Open the invite link you were sent.")).toBeVisible();
+    await page.goto("/join#abc");
+    await expect(page.getByText("This link looks incomplete.")).toBeVisible();
+    await collectViolations();
+  });
+
   await test.step("unknown paths show the not-found page", async () => {
     await page.goto("/no/such/page");
     await expect(page.getByRole("heading", { name: "Page not found" })).toBeVisible();
