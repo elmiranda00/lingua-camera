@@ -236,8 +236,8 @@ If the China check fails, fix reachability (see Risks) before inviting the China
 - [ ] **China** — The \~30 MB OCR model files download and cache on their phone; `speechSynthesis` speaks Chinese, or MeloTTS on Workers AI does.
 - [x] **M1** — A novel page (FR) and a street sign (ZH) both show a box on every word, with all three tiers visible; under 4 s from shutter on a mid-range phone. (Tested on the owner's phone 2026-11-13: read times judged fast enough, Chinese a little slower; exact times not recorded. Known limits: words are missed on curved pages, and boxes crowd and overlap on dense text such as menus. The Saved tier is styled but only appears once the word bank exists, in M3.)
 - [x] **M1** — No request leaves the device during OCR (checked in the network panel). (Checked by the browser smoke test: no request to another origin, and no endpoint accepts images.)
-- [ ] **M2** — Tapping a box shows meaning in context, part of speech, and pinyin for Chinese; p50 under 2 s from France, measured from logs.
-- [ ] **M2** — A repeated lookup is served from cache and does not count against the daily cap.
+- [ ] **M2** — Tapping a box shows meaning in context, part of speech, and pinyin for Chinese; p50 under 2 s from France, measured from logs (`npm run p50`). (Built and tested; phone check pending.)
+- [ ] **M2** — A repeated lookup is served from cache and does not count against the daily cap. (Covered by Worker tests; check on the phone.)
 - [ ] **M2** — Invite-link sign-in works on a phone: the link signs in and shows the name, lookups then succeed, and a disabled user gets `401`.
 - [ ] **M3** — Save and Remove work; a saved word shows grey on the next photo.
 - [ ] **M3** — 🔊 plays the word: the phone's voice, or MeloTTS when it has none. Short Chinese words are checked first (see Speech fallback).
