@@ -4,7 +4,10 @@ import { TtsRequest } from "@lingua-camera/shared";
 import type { AppEnv } from "../env.ts";
 import { requireUser } from "../lib/auth.ts";
 import { readJson } from "../lib/body.ts";
+import { timed } from "../lib/db.ts";
 import { apiError } from "../lib/errors.ts";
+import { release, reserve } from "../lib/usage.ts";
+import { LIMITS } from "../limits.ts";
 
 /** Decodes base64 into bytes. */
 function fromBase64(b64: string): Uint8Array {
@@ -18,6 +21,14 @@ export const tts = new Hono<AppEnv>().post("/", requireUser, async (c) => {
   const body = await readJson(c, TtsRequest);
   if (!body.ok) return body.response;
 
+  const user = c.get("user");
+  if (!user) return apiError(c, 401, "unauthorized", "Missing or invalid token.");
+  const allowed = await timed(c, () => reserve(c.env.DB, user.id, "tts", LIMITS.ttsPerDay));
+  if (!allowed) {
+    c.set("logExtra", { error: "daily_limit" });
+    return apiError(c, 429, "rate_limited", "Daily limit reached, resets at 00:00 UTC.");
+  }
+
   const started = Date.now();
   let audio: unknown;
   try {
@@ -29,11 +40,13 @@ export const tts = new Hono<AppEnv>().post("/", requireUser, async (c) => {
       model_ms: Date.now() - started,
       error: err instanceof Error ? `model_threw:${err.name}` : "model_threw",
     });
+    c.executionCtx.waitUntil(release(c.env.DB, user.id, "tts").catch(() => {}));
     return apiError(c, 502, "model_error", "Speech isn't available for this language.");
   }
   c.set("logExtra", { model: c.env.TTS_MODEL, model_ms: Date.now() - started });
 
   if (typeof audio !== "string" || audio.length === 0) {
+    c.executionCtx.waitUntil(release(c.env.DB, user.id, "tts").catch(() => {}));
     return apiError(c, 502, "model_error", "Speech isn't available for this language.");
   }
   return new Response(fromBase64(audio), { headers: { "content-type": "audio/mpeg" } });

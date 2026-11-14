@@ -24,6 +24,8 @@ export interface Vars {
   requestId: string;
   /** Set by requireUser on authenticated routes. */
   user?: AuthUser;
+  /** Total D1 time so far in this request (see lib/db.ts). */
+  dbMs?: number;
   /** Extra fields a route adds to the request's log line (model, timings, ...). */
   logExtra?: Partial<LogFields>;
 }

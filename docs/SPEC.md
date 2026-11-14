@@ -126,7 +126,7 @@ Both languages share one pipeline (photo → OCR → word boxes → tiers → ta
 
 **Saved-word matching, French detail.** Inflected forms only match after they have been looked up once: each lookup records the surface form against its headword, and saving keeps the list. So *mangeaient* shades grey once it is saved; *mangerons* shades only after it is tapped and its headword turns out to be *manger*. Good enough for v1.
 
-**Speech fallback.** If the phone has no voice for the language, the 🔊 button calls `/api/tts` (MeloTTS on Workers AI) and caches the audio on the device. MeloTTS on Workers AI does speak Chinese, but it is unreliable on very short input: a bare two-character word came back as a breath. **To validate in M2:** for Chinese, test sending the word twice (`出口，出口。`, which tested correctly) or a carrier phrase, across more words; if neither is reliable, the button is hidden on phones without a Chinese voice.
+**Speech fallback.** If the phone has no voice for the language, the 🔊 button calls `/api/tts` (MeloTTS on Workers AI) and caches the audio on the device. MeloTTS on Workers AI does speak Chinese, but it is unreliable on very short input: a bare two-character word came back as a breath. **To validate in M3:** for Chinese, test sending the word twice (`出口，出口。`, which tested correctly) or a carrier phrase, across more words; if neither is reliable, the button is hidden on phones without a Chinese voice.
 
 **Pinyin from two sources.** The model also returns pinyin. The app shows the `pinyin-pro` result and uses the model's only if `pinyin-pro` fails to load. Disagreements are not logged: a log line would have to contain the word. Revisit with the eval set.
 
@@ -222,8 +222,8 @@ v1 is done when M3 passes; each milestone ships something usable on a phone. M0�
 | --- | --- |
 | **M0 · Scaffold** | Repo, shared schemas, Worker and web app deployed to `workers.dev`; CI green |
 | **M1 · Photo to boxes** | Camera page; on-phone OCR, FR + ZH; word boxes, 3 tiers; under 4 s per photo |
-| **M2 · Tap to translate** | Qwen lookup + cache; pinyin and audio; under 2 s at p50 |
-| **M3 · Word bank** | Invite-link sign-in; Save + grey shading; sorted A–Z / by pinyin |
+| **M2 · Tap to translate** | Qwen lookup + cache; pinyin; under 2 s at p50 |
+| **M3 · Word bank** | Save + grey shading; audio (🔊); sorted A–Z / by pinyin |
 | **China check** (parallel, before M3 invite) | App, models and voice work on the China user's phone through their VPN. Custom domain (no-VPN access) deferred. |
 | *After v1* | Phrases, paste-text, dictionaries, eval set, self-hosted benchmark |
 
@@ -236,10 +236,11 @@ If the China check fails, fix reachability (see Risks) before inviting the China
 - [ ] **China** — The \~30 MB OCR model files download and cache on their phone; `speechSynthesis` speaks Chinese, or MeloTTS on Workers AI does.
 - [x] **M1** — A novel page (FR) and a street sign (ZH) both show a box on every word, with all three tiers visible; under 4 s from shutter on a mid-range phone. (Tested on the owner's phone 2026-11-13: read times judged fast enough, Chinese a little slower; exact times not recorded. Known limits: words are missed on curved pages, and boxes crowd and overlap on dense text such as menus. The Saved tier is styled but only appears once the word bank exists, in M3.)
 - [x] **M1** — No request leaves the device during OCR (checked in the network panel). (Checked by the browser smoke test: no request to another origin, and no endpoint accepts images.)
-- [ ] **M2** — Tapping a box shows meaning in context, part of speech, and pinyin for Chinese; 🔊 plays; p50 under 2 s from France, measured from logs.
+- [ ] **M2** — Tapping a box shows meaning in context, part of speech, and pinyin for Chinese; p50 under 2 s from France, measured from logs.
 - [ ] **M2** — A repeated lookup is served from cache and does not count against the daily cap.
 - [ ] **M2** — Invite-link sign-in works on a phone: the link signs in and shows the name, lookups then succeed, and a disabled user gets `401`.
 - [ ] **M3** — Save and Remove work; a saved word shows grey on the next photo.
+- [ ] **M3** — 🔊 plays the word: the phone's voice, or MeloTTS when it has none. Short Chinese words are checked first (see Speech fallback).
 - [ ] **M3** — The word bank lists French A–Z with accents sorted correctly and Chinese by pinyin; search works by word, pinyin and English.
 
 ## Risks, open questions and roadmap
