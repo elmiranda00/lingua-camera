@@ -1,7 +1,8 @@
 // French: word splitting, box widths, key-word rule
 import common from "../tiers/data/fr-common.json";
 import { boxesForWords } from "./lineBoxes.ts";
-import type { KeyWordContext, LangModule, OcrLine, Word } from "./types.ts";
+import { isSentenceEndAt } from "./sentences.ts";
+import type { JoinedLines, KeyWordContext, LangModule, OcrLine, Word } from "./types.ts";
 
 const COMMON = new Set<string>(common);
 const segmenter = new Intl.Segmenter("fr", { granularity: "word" });
@@ -63,6 +64,25 @@ function segment(text: string): Word[] {
   });
 }
 
+// A line that ends mid-word with a hyphen continues in lowercase on the next line (extra- / ordinaire)
+const HYPHEN_BREAK = /\p{L}-$/u;
+const LOWERCASE_START = /^\p{Ll}/u;
+
+function joinLines(texts: string[]): JoinedLines {
+  let text = "";
+  const starts: number[] = [];
+  texts.forEach((line, k) => {
+    if (k > 0 && HYPHEN_BREAK.test(text) && LOWERCASE_START.test(line)) {
+      text = text.slice(0, -1);
+    } else if (k > 0) {
+      text += " ";
+    }
+    starts.push(text.length);
+    text += line;
+  });
+  return { text, starts };
+}
+
 function normalizeForMatch(word: string): string {
   return word.normalize("NFC").toLowerCase().replace(APOSTROPHE, "'").replace(ELISION, "").replace(EDGE_PUNCT, "");
 }
@@ -93,6 +113,8 @@ export const fr: LangModule = {
       line,
       charWidth,
     ),
+  joinLines,
+  isSentenceEnd: (text, index) => isSentenceEndAt(text, index, { enders: ".!?…", spaced: true }),
   normalizeForMatch,
   isKeyWord,
   collator: new Intl.Collator("fr"),

@@ -1,7 +1,8 @@
 // Mandarin (Simplified): word splitting, box widths, key-word rule
 import hsk from "../tiers/data/zh-hsk12.json";
 import { boxesForWords } from "./lineBoxes.ts";
-import type { LangModule, OcrLine, Word } from "./types.ts";
+import { isSentenceEndAt } from "./sentences.ts";
+import type { JoinedLines, LangModule, OcrLine, Word } from "./types.ts";
 
 const HSK = new Set<string>(hsk);
 const segmenter = new Intl.Segmenter("zh", { granularity: "word" });
@@ -27,6 +28,17 @@ function segment(text: string): Word[] {
   }));
 }
 
+// Chinese runs on without spaces
+function joinLines(texts: string[]): JoinedLines {
+  const starts: number[] = [];
+  let length = 0;
+  for (const line of texts) {
+    starts.push(length);
+    length += line.length;
+  }
+  return { text: texts.join(""), starts };
+}
+
 // Exact match on the written word
 const normalizeForMatch = (word: string) => word.normalize("NFC").trim();
 
@@ -45,6 +57,8 @@ export const zh: LangModule = {
       line,
       charWidth,
     ),
+  joinLines,
+  isSentenceEnd: (text, index) => isSentenceEndAt(text, index, { enders: "。！？!?", spaced: false }),
   normalizeForMatch,
   isKeyWord,
   collator: new Intl.Collator("zh-u-co-pinyin"),
