@@ -2,7 +2,7 @@
 import { Hono } from "hono";
 import { TtsRequest } from "@lingua-camera/shared";
 import type { AppEnv } from "../env.ts";
-import { requireM0Token } from "../lib/auth.ts";
+import { requireUser } from "../lib/auth.ts";
 import { readJson } from "../lib/body.ts";
 import { apiError } from "../lib/errors.ts";
 
@@ -14,7 +14,7 @@ function fromBase64(b64: string): Uint8Array {
   return bytes;
 }
 
-export const tts = new Hono<AppEnv>().post("/", requireM0Token, async (c) => {
+export const tts = new Hono<AppEnv>().post("/", requireUser, async (c) => {
   const body = await readJson(c, TtsRequest);
   if (!body.ok) return body.response;
 

@@ -13,6 +13,7 @@
   "scripts": {
     "assets": "node scripts/ocr-assets.mjs",
     "wordlists": "node scripts/build-wordlists.mjs",
+    "user:add": "node scripts/user-add.ts",
     "dev": "npm run assets && concurrently -k -n worker,web -c yellow,cyan \"npm run dev -w @lingua-camera/worker\" \"npm run dev -w @lingua-camera/web\"",
     "build": "npm run assets && npm run build -w @lingua-camera/web",
     "test": "vitest run",

@@ -18,11 +18,11 @@ on one origin. It calls Workers AI for lookups and speech, and holds the D1 data
 | File | Role |
 | --- | --- |
 | `src/index.ts` | App entry: request ID, headers, logging, route mounting, asset fallback |
-| `src/routes/` | `health`, `lookup`, `tts` |
+| `src/routes/` | `health`, `me`, `lookup`, `tts` |
 | `src/llm.ts` | LLM settings: live prompt, temperature, max tokens, retries |
 | `src/lib/model.ts` | Calls the model, parses and validates the reply |
 | `src/security.ts` | CSP, cross-origin isolation and other security headers |
-| `src/lib/auth.ts` | M0 shared test token |
+| `src/lib/auth.ts` | Per-user Bearer auth: hashes the token, looks the user up in D1 |
 | `src/lib/body.ts`, `errors.ts`, `log.ts` | Body reading, error envelope, structured logs |
 | `src/limits.ts` | Request limits (values live in `shared/src/limits.ts`) |
 | `prompts/` | Versioned prompt files, e.g. `lookup.v1.md` |
@@ -34,13 +34,15 @@ on one origin. It calls Workers AI for lookups and speech, and holds the D1 data
 | Endpoint | Auth | Notes |
 | --- | --- | --- |
 | `GET /api/health` | None | `{ ok, version }` |
-| `POST /api/lookup` | M0 token | Returns `LookupResponse`; `502` if the model fails twice |
-| `POST /api/tts` | M0 token | Returns `audio/mpeg` |
+| `GET /api/me` | User token | `{ id, name }` of the token's owner |
+| `POST /api/lookup` | User token | Returns `LookupResponse`; `502` if the model fails twice |
+| `POST /api/tts` | User token | Returns `audio/mpeg` |
 
 Errors are always `{ error: { code, message }, requestId }`. Schemas are in `shared`.
 
 Config: models come from `LOOKUP_MODEL` and `TTS_MODEL` in `wrangler.jsonc`.
-Secret: `M0_TOKEN` (`npx wrangler secret put M0_TOKEN`; locally in `worker/.dev.vars`).
+No secrets: users are rows in D1. Create one with `npm run user:add -- "Name"` (local D1) or
+`npm run user:add -- "Name" --remote` (production); it prints the invite link once.
 
 ## Running and testing
 
@@ -50,6 +52,7 @@ npm run dev:smoke -w @lingua-camera/worker    # no AI binding, no login; used by
 npx vitest run --project worker               # tests run in workerd, AI mocked
 npm run typecheck -w @lingua-camera/worker
 npm run db:migrate:local
+npm run user:add -- "Name"                  # from the repo root; add --remote for production
 ```
 
 ## Design choices
@@ -60,7 +63,7 @@ npm run db:migrate:local
 - **Model output is never trusted.** Always Zod-validated; one retry, then a typed `502`.
 - **Qwen3 thinking is off** (`/no_think`). Unverified on Workers AI; the first deploy checks the timings.
 - **Logs never contain words, sentences or tokens.**
-- **M0 auth is one shared token**, replaced by per-user invite tokens in M3.
+- **Per-user invite tokens.** 32 random bytes; only the SHA-256 is stored. A token works until the user is disabled (`disabled = 1`), and each request does one indexed D1 read, so revoking is immediate.
 
 ## Gotchas
 
@@ -71,4 +74,5 @@ npm run db:migrate:local
   Deploy and migration scripts pass `--env=""` so they always target the top-level environment.
 - `APP_VERSION` is `dev` locally; CI sets it to the short commit hash on deploy.
 - A new prompt means a new file and a new version string in `src/llm.ts`.
-- If `M0_TOKEN` is unset, lookup and TTS return `401`.
+- Unknown and disabled users get the same `401`.
+- Tests apply the D1 migrations in `test/apply-migrations.ts`; `user:add` needs `db:migrate:local` first.

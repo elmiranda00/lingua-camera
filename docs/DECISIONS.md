@@ -3,6 +3,16 @@
 Structural decisions, or ones that affect other parts of the system or later milestones.
 Newest first. Format: **Date · Decision**, then why and what it affects.
 
+## 2026-11-14 · Per-user invite auth moves from M3 into M2
+
+- **Decision:** the shared `M0_TOKEN` is gone. Every API call except health needs a per-user
+  Bearer token, checked by SHA-256 against `users.token_hash`. `GET /api/me` and
+  `npm run user:add` ship in M2; the web sign-in (`/join#<token>`) follows in M2.
+- **Why:** the daily cap and the lookup cache need real user IDs, and it avoids a throwaway
+  pseudo-user and a second auth rewrite in M3. Tokens stay valid until `disabled = 1` (not one-time).
+- **Affects:** all `/api` routes, the D1 `users` table (now used), the web API client, the M3 scope
+  (M3 keeps Save and the word bank). Production users are created by running `user:add -- "Name" --remote`.
+
 ## 2026-11-13 · Multi-threaded OCR needs cross-origin isolation headers
 
 - **Decision:** the Worker sends `Cross-Origin-Opener-Policy: same-origin` and

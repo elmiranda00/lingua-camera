@@ -13,12 +13,17 @@ export interface Env {
   APP_VERSION: string;
   LOOKUP_MODEL: string;
   TTS_MODEL: string;
-  /** M0 only: shared test token for /api/lookup and /api/tts. Set with `wrangler secret put M0_TOKEN`. */
-  M0_TOKEN?: string;
+}
+
+export interface AuthUser {
+  id: string;
+  name: string;
 }
 
 export interface Vars {
   requestId: string;
+  /** Set by requireUser on authenticated routes. */
+  user?: AuthUser;
   /** Extra fields a route adds to the request's log line (model, timings, ...). */
   logExtra?: Partial<LogFields>;
 }
