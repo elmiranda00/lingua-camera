@@ -3,6 +3,12 @@
 Structural decisions, or ones that affect other parts of the system or later milestones.
 Newest first. Format: **Date · Decision**, then why and what it affects.
 
+## 2026-11-14 · Lookup cache shared across users, daily cap per user, both in D1
+
+- **Decision:** `lookup_cache` holds one validated answer per hash of (language, model, prompt version, word, sentence), shared by all users and never containing the text. Each user gets 150 model lookups and 100 speech calls per UTC day (`usage` table); cache hits don't count, and a slot is returned if the model fails.
+- **Why:** repeats cost no model time or free-tier allocation, and the cap keeps 10 users inside Workers AI's daily free allocation.
+- **Affects:** `POST /api/lookup` and `/api/tts` (new `429`), the web popup (shows "Daily limit reached, resets at 00:00 UTC"). Changing the model or prompt version starts a fresh cache.
+
 ## 2026-11-14 · Per-user invite auth moves from M3 into M2
 
 - **Decision:** the shared `M0_TOKEN` is gone. Every API call except health needs a per-user
@@ -113,7 +119,7 @@ Newest first. Format: **Date · Decision**, then why and what it affects.
   four test lookups returned valid output (500–800 ms round trip from France). Thinking is off.
   JSON mode isn't needed so far; revisit if retries (`attempts` 2) show up in the logs.
 - **Observed:** `otherMeanings` returned English inflections ("eat", "ate", "eating") instead of
-  other senses. Fix with a new `lookup.v2` prompt in M2; don't edit v1.
+  other senses. A real-model check on 2026-11-14 still showed padded lists (synonyms, invented senses) with a tightened prompt, so the fix is deferred. Add a new prompt version when it is picked up; don't edit v1.
 - **Affects:** `worker/src/lib/model.ts`, `worker/prompts/`.
 
 ## 2026-11-11 · Hosting stays on Cloudflare; `workers.dev` until the domain

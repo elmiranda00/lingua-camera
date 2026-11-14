@@ -32,6 +32,7 @@ app.use("*", async (c, next) => {
       status: c.res.status,
       total_ms: Date.now() - started,
       ...(Number.isFinite(ocrMs) && ocrMs > 0 ? { ocr_ms: ocrMs } : {}),
+      ...(c.get("dbMs") !== undefined ? { db_ms: c.get("dbMs") } : {}),
       ...c.get("logExtra"),
     });
   }

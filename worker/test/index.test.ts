@@ -1,54 +1,21 @@
 // Full-app tests in workerd, AI mocked, local D1
-import { env as realEnv } from "cloudflare:workers";
-import { createExecutionContext, waitOnExecutionContext } from "cloudflare:test";
-import { beforeAll, describe, expect, it, vi } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError, Health, LookupResponse, Me } from "@lingua-camera/shared";
-import { app } from "../src/index.ts";
-import type { Env, ModelRunner } from "../src/env.ts";
-import { hashToken } from "../src/lib/auth.ts";
 import { CSP } from "../src/security.ts";
+import {
+  call,
+  DISABLED_TOKEN,
+  goodReply,
+  lookupInit,
+  makeEnv,
+  resetState,
+  seedUsers,
+  TOKEN,
+  validLookup,
+} from "./helpers.ts";
 
-const TOKEN = "test-token";
-const DISABLED_TOKEN = "disabled-token";
-
-const goodReply = JSON.stringify({
-  surface: "出口",
-  headword: "出口",
-  pos: "noun",
-  gender: null,
-  pinyin: "chū kǒu",
-  meaningInContext: "exit",
-  otherMeanings: ["to export", "to speak"],
-  note: null,
-});
-
-function makeEnv(ai: ModelRunner, overrides: Partial<Env> = {}): Env {
-  return { ...(realEnv as unknown as Env), AI: ai, ...overrides };
-}
-
-async function call(env: Env, path: string, init?: RequestInit): Promise<Response> {
-  const ctx = createExecutionContext();
-  const res = await app.fetch(new Request(`https://lingua-camera.test${path}`, init), env, ctx);
-  await waitOnExecutionContext(ctx);
-  return res;
-}
-
-const lookupInit = (body: unknown, token = TOKEN): RequestInit => ({
-  method: "POST",
-  headers: { "content-type": "application/json", authorization: `Bearer ${token}` },
-  body: JSON.stringify(body),
-});
-
-const validLookup = { lang: "zh", word: "出口", sentence: "出口在左边。" };
-
-beforeAll(async () => {
-  const db = (realEnv as unknown as Env).DB;
-  const insert = db.prepare("INSERT OR REPLACE INTO users (id, name, token_hash, disabled) VALUES (?, ?, ?, ?)");
-  await db.batch([
-    insert.bind("user-1", "Test User", await hashToken(TOKEN), 0),
-    insert.bind("user-2", "Gone User", await hashToken(DISABLED_TOKEN), 1),
-  ]);
-});
+beforeAll(seedUsers);
+beforeEach(resetState);
 
 describe("GET /api/health", () => {
   it("returns ok, version, request id and security headers", async () => {
