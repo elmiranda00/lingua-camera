@@ -2,7 +2,7 @@
 //
 // Every response is validated with a shared Zod schema. Failures become ApiRequestError
 // and log the request ID only (never bodies, words, sentences or tokens).
-import { ApiError, Health, Me, type ErrorCode } from "@lingua-camera/shared";
+import { ApiError, Health, LookupResponse, Me, type ErrorCode, type LookupRequest } from "@lingua-camera/shared";
 import { tokenStore } from "../auth/token.ts";
 
 /** Anything with Zod's safeParse shape. */
@@ -10,7 +10,8 @@ export interface Parser<T> {
   safeParse(data: unknown): { success: true; data: T } | { success: false };
 }
 
-export type ApiFailure = ErrorCode | "network" | "timeout" | "bad_response";
+// "aborted": the caller cancelled the request (not an error, not logged)
+export type ApiFailure = ErrorCode | "network" | "timeout" | "bad_response" | "aborted";
 
 export class ApiRequestError extends Error {
   readonly code: ApiFailure;
@@ -40,6 +41,8 @@ export function createApiClient(options: ApiClientOptions = {}) {
   const fetchFn = options.fetch ?? ((input, init) => globalThis.fetch(input, init));
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const getToken = options.getToken ?? (() => tokenStore.read());
+  // How long the last photo took to read; goes out once, on the next request, for the Worker's timing logs
+  let pendingOcrMs: number | null = null;
 
   function fail(path: string, error: ApiRequestError): ApiRequestError {
     console.error("API request failed", {
@@ -55,11 +58,19 @@ export function createApiClient(options: ApiClientOptions = {}) {
     const headers = new Headers(init?.headers);
     const token = getToken();
     if (token && !headers.has("authorization")) headers.set("authorization", `Bearer ${token}`);
+    if (pendingOcrMs !== null) {
+      headers.set("x-ocr-ms", String(pendingOcrMs));
+      pendingOcrMs = null;
+    }
+
+    const timeout = AbortSignal.timeout(timeoutMs);
+    const signal = init?.signal ? AbortSignal.any([init.signal, timeout]) : timeout;
 
     let res: Response;
     try {
-      res = await fetchFn(path, { ...init, headers, signal: AbortSignal.timeout(timeoutMs) });
+      res = await fetchFn(path, { ...init, headers, signal });
     } catch (err) {
+      if (init?.signal?.aborted) throw new ApiRequestError("aborted", "The request was cancelled.", null, null);
       const timedOut = err instanceof DOMException && err.name === "TimeoutError";
       throw fail(
         path,
@@ -107,6 +118,16 @@ export function createApiClient(options: ApiClientOptions = {}) {
 
   return {
     getHealth: () => request("/api/health", Health),
+    noteOcrMs: (ms: number) => {
+      pendingOcrMs = Math.round(ms);
+    },
+    lookup: (body: LookupRequest, opts: { signal?: AbortSignal } = {}) =>
+      request("/api/lookup", LookupResponse, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(body),
+        signal: opts.signal,
+      }),
     /** Who a token belongs to; pass a token to check one that isn't saved yet. */
     getMe: (token?: string) =>
       request("/api/me", Me, token ? { headers: { authorization: `Bearer ${token}` } } : undefined),

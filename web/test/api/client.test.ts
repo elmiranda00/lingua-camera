@@ -112,3 +112,63 @@ describe("getMe and the Bearer token", () => {
     expect(JSON.stringify(spy.mock.calls)).not.toContain(TOKEN);
   });
 });
+
+describe("lookup", () => {
+  const request = { lang: "zh" as const, word: "出口", sentence: "出口在左边。" };
+  const response = {
+    surface: "出口",
+    headword: "出口",
+    pos: "noun",
+    gender: null,
+    pinyin: "chū kǒu",
+    meaningInContext: "exit",
+    otherMeanings: [],
+    note: null,
+    cached: false,
+    requestId: "r1",
+  };
+  const clientFor = (fetchMock: ReturnType<typeof vi.fn>) =>
+    createApiClient({ fetch: fetchMock as unknown as typeof fetch, getToken: () => null });
+
+  it("posts the word and sentence as JSON and validates the reply", async () => {
+    const fetchMock = vi.fn(async () => json(response));
+    await expect(clientFor(fetchMock).lookup(request)).resolves.toMatchObject({ headword: "出口", cached: false });
+    const [path, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+    expect(path).toBe("/api/lookup");
+    expect(init.method).toBe("POST");
+    expect(new Headers(init.headers).get("content-type")).toBe("application/json");
+    expect(JSON.parse(init.body as string)).toEqual(request);
+  });
+
+  it("rejects a reply that breaks the contract", async () => {
+    const client = clientFor(vi.fn(async () => json({ ...response, pos: "banana" })));
+    await expect(client.lookup(request)).rejects.toMatchObject({ code: "bad_response" });
+  });
+
+  it("reports a cancelled request as aborted, without logging an error", async () => {
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const controller = new AbortController();
+    const fetchMock = vi.fn(async (_path: string, init: RequestInit) => {
+      controller.abort();
+      return Promise.reject(new DOMException("aborted", "AbortError")).catch((e: unknown) => {
+        expect(init.signal?.aborted).toBe(true);
+        throw e;
+      });
+    });
+    await expect(clientFor(fetchMock).lookup(request, { signal: controller.signal })).rejects.toMatchObject({
+      code: "aborted",
+    });
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it("sends the last photo's read time once, on the next request", async () => {
+    const fetchMock = vi.fn(async () => json(response));
+    const client = clientFor(fetchMock);
+    client.noteOcrMs(1234.4);
+    await client.lookup(request);
+    await client.lookup(request);
+    const sent = (i: number) => new Headers((fetchMock.mock.calls[i] as unknown as [string, RequestInit])[1].headers);
+    expect(sent(0).get("x-ocr-ms")).toBe("1234");
+    expect(sent(1).has("x-ocr-ms")).toBe(false);
+  });
+});

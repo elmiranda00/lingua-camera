@@ -59,8 +59,8 @@ All boxes are tappable, stop words included. Saved takes priority over Key. The 
 
 **Tap → popup (bottom sheet)**
 
-- Shows at once: the word as written, and for Chinese its pinyin with tone marks (computed on the phone, no wait).
-- Fills in within about 2 s: dictionary form, English meaning in this context, part of speech, gender for French nouns, and one line of other common meanings.
+- Shows at once: the word as written and a loading indicator. It is a bottom sheet over the photo, not modal: tapping another word replaces its content.
+- Fills in within about 2 s, all together: for Chinese the pinyin with tone marks (computed on the phone), dictionary form, English meaning in this context, part of speech, gender for French nouns, and one line of other common meanings.
 - 🔊 plays pronunciation. **Save** adds it to the bank (button becomes "Saved ✓"; tapping again removes it). The box turns grey immediately.
 - Errors: "Couldn't translate right now — try again" with a retry button; Save stays disabled until a translation has loaded.
 
@@ -128,7 +128,7 @@ Both languages share one pipeline (photo → OCR → word boxes → tiers → ta
 
 **Speech fallback.** If the phone has no voice for the language, the 🔊 button calls `/api/tts` (MeloTTS on Workers AI) and caches the audio on the device. MeloTTS on Workers AI does speak Chinese, but it is unreliable on very short input: a bare two-character word came back as a breath. **To validate in M2:** for Chinese, test sending the word twice (`出口，出口。`, which tested correctly) or a carrier phrase, across more words; if neither is reliable, the button is hidden on phones without a Chinese voice.
 
-**Pinyin from two sources.** The model also returns pinyin. The app shows the `pinyin-pro` result and logs any disagreement, which becomes a test case for the eval set.
+**Pinyin from two sources.** The model also returns pinyin. The app shows the `pinyin-pro` result and uses the model's only if `pinyin-pro` fails to load. Disagreements are not logged: a log line would have to contain the word. Revisit with the eval set.
 
 ## Data model and API
 
@@ -194,7 +194,7 @@ Access is by invite link only, each user is capped per day so the free model all
 
 | Limit | Value | When exceeded |
 | --- | --- | --- |
-| Lookups per user per day | 150 (cache hits not counted) | `429`, popup says "Daily limit reached, resets at 01:00 Paris / 08:00 Beijing" |
+| Lookups per user per day | 150 (cache hits not counted) | `429`, popup says "Daily limit reached, resets at 00:00 UTC" |
 | TTS calls per user per day | 100 | `429`, 🔊 hidden |
 | `word` length | ≤ 40 characters | `400` |
 | `sentence` length | ≤ 300 characters | `400` |

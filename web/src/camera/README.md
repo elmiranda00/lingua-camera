@@ -28,7 +28,7 @@ The pieces of the camera page: live viewfinder, taking a photo, showing it with 
 
 ## Interfaces
 
-Used only by `src/pages/Camera.tsx`. Boxes come from `src/tiers`; OCR from `src/ocr`.
+Used only by `src/pages/Camera.tsx`, which also owns the translation sheet (`src/lookup/`). Boxes come from `src/tiers`; OCR from `src/ocr`.
 
 ## Running and testing
 
@@ -49,5 +49,5 @@ Unit tests: `web/test/camera` (geometry, zoom). The browser smoke test covers th
 - In-app browsers (WeChat and others) may block the live camera; the file inputs are the fallback.
 - Curved pages lose words: the detector reads straight lines best, so photograph pages as flat as possible.
 - Dense text (menus) gives crowded, overlapping boxes, mostly from `Intl.Segmenter` cutting phrases into short pieces. Candidate fixes: skip stop words, merge short neighbours.
-- Tapping a box only highlights it and shows its word. The popup arrives in M2.
+- Tapping a box highlights it and opens the translation sheet (`src/lookup/`). The sheet covers the lower part of the photo.
 - The key-word outline size is set per box with a CSS variable; keep it when restyling.
