@@ -71,6 +71,49 @@ test("app loads on one origin with no CSP violations or errors", async ({ page, 
     await collectViolations();
   });
 
+  await test.step("tapping a word opens the translation sheet, and tapping another replaces it", async () => {
+    // The smoke Worker has no AI or database, so the lookup is answered here
+    const seen: { ocrMs: string | undefined; word: string; sentence: string }[] = [];
+    await page.route("**/api/lookup", async (route) => {
+      const request = route.request();
+      const body = request.postDataJSON() as { word: string; sentence: string };
+      seen.push({ ocrMs: request.headers()["x-ocr-ms"], word: body.word, sentence: body.sentence });
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          surface: body.word,
+          headword: body.word,
+          pos: "noun",
+          gender: null,
+          pinyin: null,
+          meaningInContext: `meaning of ${body.word}`,
+          otherMeanings: ["other sense"],
+          note: null,
+          cached: false,
+          requestId: "e2e",
+        }),
+      });
+    });
+    const boxes = page.locator("button.word");
+    const sheet = page.getByRole("region", { name: "Translation" });
+
+    await boxes.nth(0).click();
+    await expect(sheet).toContainText("meaning of");
+    await expect(sheet).toContainText("Also: other sense");
+    expect(seen[0]?.ocrMs).toMatch(/^\d+$/);
+    expect(seen[0]?.sentence.length).toBeGreaterThan(0);
+
+    await boxes.nth(1).click();
+    await expect(sheet).toContainText(`meaning of ${seen[1]?.word}`);
+    expect(seen).toHaveLength(2);
+    expect(seen[1]?.ocrMs).toBeUndefined(); // sent once, with the first request only
+
+    await page.keyboard.press("Escape");
+    await expect(sheet).toBeHidden();
+    await collectViolations();
+  });
+
   await test.step("tapping a box selects it, and Retake goes back", async () => {
     const first = page.locator("button.word").first();
     const label = (await first.getAttribute("aria-label")) ?? "";
@@ -128,4 +171,33 @@ test("app loads on one origin with no CSP violations or errors", async ({ page, 
   expect(violations, "CSP violations").toEqual([]);
   expect(foreignRequests, "requests to other origins").toEqual([]);
   expect(errors, "console errors").toEqual([]);
+});
+
+test("switching to Chinese loads pinyin-pro from our own origin under the CSP", async ({ page, baseURL }) => {
+  if (!baseURL) throw new Error("baseURL is not set");
+  const ownOrigin = new URL(baseURL).origin;
+  const violations: string[] = [];
+  const foreignRequests: string[] = [];
+
+  await page.addInitScript(() => {
+    (window as unknown as WithCsp).__csp = [];
+    document.addEventListener("securitypolicyviolation", (e) =>
+      (window as unknown as WithCsp).__csp.push(`${e.violatedDirective}: ${e.blockedURI}`),
+    );
+  });
+  page.on("request", (r) => {
+    const url = new URL(r.url());
+    if ((url.protocol === "http:" || url.protocol === "https:") && url.origin !== ownOrigin) foreignRequests.push(r.url());
+  });
+
+  await page.goto("/");
+  // pinyin-pro is the only chunk that is fetched on demand
+  const chunk = page.waitForResponse((res) => /\/assets\/esm-.*\.js$/.test(res.url()));
+  await page.getByRole("button", { name: /Language: French/ }).click();
+  expect((await chunk).ok()).toBe(true);
+  await expect(page.getByRole("button", { name: /Language: Chinese/ })).toBeVisible();
+
+  violations.push(...(await page.evaluate(() => (window as unknown as WithCsp).__csp)));
+  expect(violations, "CSP violations").toEqual([]);
+  expect(foreignRequests, "requests to other origins").toEqual([]);
 });

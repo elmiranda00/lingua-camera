@@ -1,6 +1,7 @@
 // Camera page (home): viewfinder → photo → word boxes
-import type { Lang } from "@lingua-camera/shared";
+import { LIMITS, type Lang } from "@lingua-camera/shared";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { api } from "../api/client.ts";
 import "../camera/camera.css";
 import { useLang, useWarmUp } from "../camera/hooks.ts";
 import { LangChip } from "../camera/LangChip.tsx";
@@ -10,7 +11,11 @@ import { PhotoPickers } from "../camera/PhotoPickers.tsx";
 import { PhotoView } from "../camera/PhotoView.tsx";
 import { StartCamera } from "../camera/StartCamera.tsx";
 import { Viewfinder } from "../camera/Viewfinder.tsx";
+import { createSentenceFinder } from "../lang/context.ts";
 import { getLang } from "../lang/index.ts";
+import { preloadPinyin } from "../lang/pinyin.ts";
+import { WordSheet } from "../lookup/WordSheet.tsx";
+import { useWordLookup } from "../lookup/useWordLookup.ts";
 import { recognize } from "../ocr/engine.ts";
 import { tierBoxes, type TieredBox } from "../tiers/tiers.ts";
 
@@ -23,7 +28,15 @@ type Size = { width: number; height: number };
 type Phase =
   | { kind: "live" }
   | { kind: "reading"; photo: Photo; size?: Size }
-  | { kind: "result"; photo: Photo; size: Size; boxes: TieredBox[]; ms: number }
+  | {
+      kind: "result";
+      photo: Photo;
+      size: Size;
+      boxes: TieredBox[];
+      ms: number;
+      lang: Lang; // the language the photo was read in
+      sentenceOf: (box: TieredBox) => string;
+    }
   | { kind: "error"; photo: Photo; size?: Size };
 
 export function Camera() {
@@ -33,6 +46,7 @@ export function Camera() {
   // The camera stays off until the user taps the camera icon
   const [camera, setCamera] = useState<"off" | "starting" | "live" | "unavailable">("off");
   const [selected, setSelected] = useState<TieredBox | null>(null);
+  const { state: sheet, controller } = useWordLookup();
   const videoRef = useRef<HTMLVideoElement>(null);
   const newest = useRef(0); // only the latest read may update the screen
   const currentUrl = useRef<string | null>(null);
@@ -44,9 +58,15 @@ export function Camera() {
     [],
   );
 
+  // Fetch pinyin-pro while the user takes the photo, so the first lookup doesn't wait for it
+  useEffect(() => {
+    if (lang === "zh") void preloadPinyin();
+  }, [lang]);
+
   const read = useCallback(async (photo: Photo, forLang: Lang, startedAt: number) => {
     const id = ++newest.current;
     setSelected(null);
+    controller.reset();
     setPhase({ kind: "reading", photo });
     let size: Size | undefined;
     try {
@@ -56,14 +76,25 @@ export function Camera() {
       const result = await recognize(forLang, bitmap);
       const lines = result.items.map((item) => ({ text: item.text, poly: item.poly }));
       const boxes = tierBoxes(lines, getLang(forLang));
+      const findSentence = createSentenceFinder(lines, getLang(forLang));
       if (id === newest.current) {
-        setPhase({ kind: "result", photo, size, boxes, ms: Math.round(performance.now() - startedAt) });
+        const ms = Math.round(performance.now() - startedAt);
+        api.noteOcrMs(ms);
+        setPhase({
+          kind: "result",
+          photo,
+          size,
+          boxes,
+          ms,
+          lang: forLang,
+          sentenceOf: (box) => findSentence({ line: box.line, start: box.start, end: box.end }),
+        });
       }
     } catch (error) {
       console.error("Reading the photo failed:", error instanceof Error ? error.message : "unknown error");
       if (id === newest.current) setPhase({ kind: "error", photo, size });
     }
-  }, []);
+  }, [controller]);
 
   const takePhoto = useCallback(
     async (getBlob: () => Promise<Blob>) => {
@@ -85,6 +116,7 @@ export function Camera() {
     if (currentUrl.current) URL.revokeObjectURL(currentUrl.current);
     currentUrl.current = null;
     setSelected(null);
+    controller.reset();
     // Already switched on once: the viewfinder comes straight back
     setCamera((c) => (c === "off" || c === "unavailable" ? c : "starting"));
     setPhase({ kind: "live" });
@@ -95,6 +127,22 @@ export function Camera() {
     // A photo already taken is read again in the new language
     if (phase.kind === "result" || phase.kind === "error") void read(phase.photo, next, performance.now());
   };
+
+  // Tapping another word replaces the sheet's content at once
+  const selectWord = (box: TieredBox) => {
+    setSelected(box);
+    if (phase.kind !== "result") return;
+    void controller.start({
+      lang: phase.lang,
+      word: box.text.slice(0, LIMITS.wordMaxChars),
+      sentence: phase.sentenceOf(box) || box.text,
+    });
+  };
+
+  const closeSheet = useCallback(() => {
+    controller.close();
+    setSelected(null);
+  }, [controller]);
 
   const onReady = useCallback(() => setCamera("live"), []);
   const onUnavailable = useCallback(() => setCamera("unavailable"), []);
@@ -125,10 +173,11 @@ export function Camera() {
               boxes={phase.kind === "result" ? phase.boxes : []}
               reading={phase.kind !== "result"}
               selected={selected}
-              onSelect={setSelected}
+              onSelect={selectWord}
             />
           )
         )}
+        <WordSheet state={sheet} onRetry={() => void controller.retry()} onClose={closeSheet} />
         {phase.kind === "reading" && (
           <p className="reading" role="status">
             <span className="spinner" aria-hidden="true" /> Reading text…
