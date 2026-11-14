@@ -5,6 +5,7 @@ import { apiError } from "./lib/errors.ts";
 import { log } from "./lib/log.ts";
 import { health } from "./routes/health.ts";
 import { lookup } from "./routes/lookup.ts";
+import { me } from "./routes/me.ts";
 import { tts } from "./routes/tts.ts";
 import { applySecurityHeaders } from "./security.ts";
 
@@ -37,6 +38,7 @@ app.use("*", async (c, next) => {
 });
 
 app.route("/api/health", health);
+app.route("/api/me", me);
 app.route("/api/lookup", lookup);
 app.route("/api/tts", tts);
 app.all("/api/*", (c) => apiError(c, 404, "not_found", "No such endpoint."));

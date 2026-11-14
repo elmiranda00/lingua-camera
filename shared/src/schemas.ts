@@ -38,6 +38,14 @@ export const Health = z.object({
 });
 export type Health = z.infer<typeof Health>;
 
+// ---------- GET /api/me ----------
+
+export const Me = z.object({
+  id: z.string(),
+  name: z.string(),
+});
+export type Me = z.infer<typeof Me>;
+
 // ---------- POST /api/lookup ----------
 
 export const LookupRequest = z.object({

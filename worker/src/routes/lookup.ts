@@ -1,16 +1,16 @@
 // POST /api/lookup: translate a word in its sentence
 //
-// M0: test-token auth, no cache, no daily cap
+// No cache or daily cap yet
 import { Hono } from "hono";
 import { LookupRequest, type LookupResponse } from "@lingua-camera/shared";
 import type { AppEnv } from "../env.ts";
-import { requireM0Token } from "../lib/auth.ts";
+import { requireUser } from "../lib/auth.ts";
 import { readJson } from "../lib/body.ts";
 import { apiError } from "../lib/errors.ts";
 import { runLookup } from "../lib/model.ts";
 import { LOOKUP_LLM } from "../llm.ts";
 
-export const lookup = new Hono<AppEnv>().post("/", requireM0Token, async (c) => {
+export const lookup = new Hono<AppEnv>().post("/", requireUser, async (c) => {
   const body = await readJson(c, LookupRequest);
   if (!body.ok) return body.response;
 

@@ -1,13 +1,15 @@
-// Full-app tests in workerd, AI mocked
+// Full-app tests in workerd, AI mocked, local D1
 import { env as realEnv } from "cloudflare:workers";
 import { createExecutionContext, waitOnExecutionContext } from "cloudflare:test";
-import { describe, expect, it, vi } from "vitest";
-import { ApiError, Health, LookupResponse } from "@lingua-camera/shared";
+import { beforeAll, describe, expect, it, vi } from "vitest";
+import { ApiError, Health, LookupResponse, Me } from "@lingua-camera/shared";
 import { app } from "../src/index.ts";
 import type { Env, ModelRunner } from "../src/env.ts";
+import { hashToken } from "../src/lib/auth.ts";
 import { CSP } from "../src/security.ts";
 
 const TOKEN = "test-token";
+const DISABLED_TOKEN = "disabled-token";
 
 const goodReply = JSON.stringify({
   surface: "出口",
@@ -21,7 +23,7 @@ const goodReply = JSON.stringify({
 });
 
 function makeEnv(ai: ModelRunner, overrides: Partial<Env> = {}): Env {
-  return { ...(realEnv as unknown as Env), AI: ai, M0_TOKEN: TOKEN, ...overrides };
+  return { ...(realEnv as unknown as Env), AI: ai, ...overrides };
 }
 
 async function call(env: Env, path: string, init?: RequestInit): Promise<Response> {
@@ -38,6 +40,15 @@ const lookupInit = (body: unknown, token = TOKEN): RequestInit => ({
 });
 
 const validLookup = { lang: "zh", word: "出口", sentence: "出口在左边。" };
+
+beforeAll(async () => {
+  const db = (realEnv as unknown as Env).DB;
+  const insert = db.prepare("INSERT OR REPLACE INTO users (id, name, token_hash, disabled) VALUES (?, ?, ?, ?)");
+  await db.batch([
+    insert.bind("user-1", "Test User", await hashToken(TOKEN), 0),
+    insert.bind("user-2", "Gone User", await hashToken(DISABLED_TOKEN), 1),
+  ]);
+});
 
 describe("GET /api/health", () => {
   it("returns ok, version, request id and security headers", async () => {
@@ -61,6 +72,29 @@ describe("unknown API route", () => {
   });
 });
 
+describe("GET /api/me", () => {
+  const get = (token?: string): RequestInit => ({
+    headers: token === undefined ? {} : { authorization: `Bearer ${token}` },
+  });
+
+  it("returns the signed-in user", async () => {
+    const res = await call(makeEnv({ run: vi.fn() }), "/api/me", get(TOKEN));
+    expect(res.status).toBe(200);
+    expect(Me.parse(await res.json())).toEqual({ id: "user-1", name: "Test User" });
+  });
+
+  it.each([
+    ["no token", undefined],
+    ["an unknown token", "nope"],
+    ["a disabled user's token", DISABLED_TOKEN],
+    ["an over-long token", "x".repeat(500)],
+  ])("rejects %s with 401", async (_label, token) => {
+    const res = await call(makeEnv({ run: vi.fn() }), "/api/me", get(token));
+    expect(res.status).toBe(401);
+    expect(ApiError.parse(await res.json()).error.code).toBe("unauthorized");
+  });
+});
+
 describe("POST /api/lookup", () => {
   it("rejects a missing token", async () => {
     const res = await call(makeEnv({ run: vi.fn() }), "/api/lookup", {
@@ -75,10 +109,11 @@ describe("POST /api/lookup", () => {
     expect(res.status).toBe(401);
   });
 
-  it("rejects everything when no M0 token is configured", async () => {
-    const env = makeEnv({ run: vi.fn() }, { M0_TOKEN: undefined });
-    const res = await call(env, "/api/lookup", lookupInit(validLookup));
+  it("rejects a disabled user and never calls the model", async () => {
+    const run = vi.fn();
+    const res = await call(makeEnv({ run }), "/api/lookup", lookupInit(validLookup, DISABLED_TOKEN));
     expect(res.status).toBe(401);
+    expect(run).not.toHaveBeenCalled();
   });
 
   it("rejects an invalid body with 400", async () => {
@@ -142,6 +177,11 @@ describe("POST /api/lookup", () => {
 });
 
 describe("POST /api/tts", () => {
+  it("rejects a missing token", async () => {
+    const res = await call(makeEnv({ run: vi.fn() }), "/api/tts", { method: "POST", body: "{}" });
+    expect(res.status).toBe(401);
+  });
+
   it("returns audio bytes", async () => {
     const run = vi.fn().mockResolvedValue({ audio: btoa("ID3fake") });
     const res = await call(makeEnv({ run }), "/api/tts", lookupInit({ lang: "zh", text: "出口" }));
