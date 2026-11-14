@@ -15,6 +15,12 @@ describe("routes", () => {
     expect(route?.loader).toBeDefined();
   });
 
+  it("matches /join to the sign-in route, which has a loader", () => {
+    const route = matchRoutes(routes, "/join")?.[0]?.route;
+    expect(route?.path).toBe("/join");
+    expect(route?.loader).toBeDefined();
+  });
+
   it("sends unknown paths to the not-found route", () => {
     expect(matchRoutes(routes, "/nope/at/all")?.[0]?.route.path).toBe("*");
   });

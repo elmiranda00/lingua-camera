@@ -4,6 +4,8 @@ import type { RouteObject } from "react-router";
 import { About } from "./pages/About.tsx";
 import { aboutLoader } from "./pages/aboutLoader.ts";
 import { Camera } from "./pages/Camera.tsx";
+import { Join } from "./pages/Join.tsx";
+import { joinLoader } from "./pages/joinLoader.ts";
 import { Loading } from "./pages/Loading.tsx";
 import { NotFound } from "./pages/NotFound.tsx";
 import { RouteError } from "./pages/RouteError.tsx";
@@ -14,6 +16,13 @@ export const routes: RouteObject[] = [
     path: "/about",
     Component: About,
     loader: aboutLoader,
+    HydrateFallback: Loading,
+    ErrorBoundary: RouteError,
+  },
+  {
+    path: "/join",
+    Component: Join,
+    loader: joinLoader,
     HydrateFallback: Loading,
     ErrorBoundary: RouteError,
   },

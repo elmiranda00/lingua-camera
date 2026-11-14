@@ -28,7 +28,8 @@ app's hashed files, so the ~30 MB download happens once. `npm run assets` puts t
 | `src/main.tsx` | Entry point |
 | `src/App.tsx` | Creates the browser router |
 | `src/routes.tsx` | Route table: loader, loading page and error page per route |
-| `src/pages/` | `Camera` (home), `About`, `NotFound`, `Loading`, `RouteError`, `aboutLoader` |
+| `src/pages/` | `Camera` (home), `Join` (invite-link sign-in), `About`, `NotFound`, `Loading`, `RouteError`, loaders |
+| `src/auth/` | Sign-in token in localStorage (`token.ts`) and the invite-link flow (`join.ts`) |
 | `src/camera/` | Camera page pieces: viewfinder, photo view, word boxes, zoom. See its README |
 | `public/sw.js` | Service worker: caches OCR files and the app |
 | `public/manifest.webmanifest`, icons | Makes the app installable (Add to Home Screen). Icons are made by `../scripts/make-icons.mjs` |
@@ -48,10 +49,11 @@ app's hashed files, so the ~30 MB download happens once. `npm run assets` puts t
 | Route | Page |
 | --- | --- |
 | `/` | Camera |
+| `/join#<token>` | Signs in from an invite link |
 | `/about` | Shows the API version |
 | `*` | Page not found |
 
-API client (`src/api/client.ts`): `api.getHealth()`. Errors are `ApiRequestError` with
+API client (`src/api/client.ts`): `api.getHealth()`, `api.getMe(token?)`. It sends the saved token as `Authorization: Bearer`. Errors are `ApiRequestError` with
 `code`, `status` and `requestId`. Schemas come from `@lingua-camera/shared`.
 
 ## Running and testing
@@ -93,6 +95,7 @@ Planned for M2, not installed yet:
 ## Design choices
 
 - **Data router with per-route loaders and error pages**, so data loading and failure handling live in one place.
+- **Sign-in token in localStorage** (as the spec says), checked with `/api/me` before it is saved. The fragment is removed from the address bar only after that succeeds, so a failed attempt can be retried by reloading.
 - **Every API response is validated** against a `shared` schema; failures are logged with the request ID only.
 - **Zod runs without `eval`** because the CSP forbids it. `browser-setup` must stay the first import in `main.tsx`.
 - **Our own OCR worker**, not PaddleOCR's prebuilt one: the prebuilt worker bundles a WebGPU ONNX Runtime
@@ -108,6 +111,7 @@ Planned for M2, not installed yet:
 
 ## Gotchas
 
+- `/join` reloads on `hashchange`: pasting an invite link into a tab already on `/join` changes only the fragment, which doesn't re-run the loader.
 - A loader blocks the page until it finishes (up to the 10 s timeout). The camera route has none, and must stay that way.
 - The camera needs HTTPS. Test on a phone against the deployed URL, not a LAN address.
 - The service worker only registers in production builds.

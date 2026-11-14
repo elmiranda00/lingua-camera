@@ -238,7 +238,8 @@ If the China check fails, fix reachability (see Risks) before inviting the China
 - [x] **M1** — No request leaves the device during OCR (checked in the network panel). (Checked by the browser smoke test: no request to another origin, and no endpoint accepts images.)
 - [ ] **M2** — Tapping a box shows meaning in context, part of speech, and pinyin for Chinese; 🔊 plays; p50 under 2 s from France, measured from logs.
 - [ ] **M2** — A repeated lookup is served from cache and does not count against the daily cap.
-- [ ] **M3** — Both users sign in by invite link; Save and Remove work; a saved word shows grey on the next photo.
+- [ ] **M2** — Invite-link sign-in works on a phone: the link signs in and shows the name, lookups then succeed, and a disabled user gets `401`.
+- [ ] **M3** — Save and Remove work; a saved word shows grey on the next photo.
 - [ ] **M3** — The word bank lists French A–Z with accents sorted correctly and Chinese by pinyin; search works by word, pinyin and English.
 
 ## Risks, open questions and roadmap
