@@ -27,11 +27,21 @@ export interface KeyWordContext {
   sentenceStart: boolean;
 }
 
+// Lines of one block as running text; starts[k] is where line k begins in `text`
+export interface JoinedLines {
+  text: string;
+  starts: number[];
+}
+
 export interface LangModule {
   lang: Lang;
   segment(text: string): Word[];
   // Boxes for the word-like tokens of one line
   splitLineBoxes(line: OcrLine): WordBox[];
+  // Lines of a block in reading order -> one text (French: spaces, end-of-line hyphens rejoined; Chinese: none)
+  joinLines(texts: string[]): JoinedLines;
+  // True when text[index] closes a sentence
+  isSentenceEnd(text: string, index: number): boolean;
   normalizeForMatch(word: string): string;
   isKeyWord(word: string, ctx: KeyWordContext): boolean;
   collator: Intl.Collator;
