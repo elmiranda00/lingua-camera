@@ -13,13 +13,14 @@ if (!file) {
 }
 
 // Each tail event carries our JSON log line as a string in logs[].message[]
+// Events are one per line or pretty-printed (PowerShell adds a BOM); each starts with "{" in column 0
 function* logLines(text) {
-  for (const raw of text.split(/\r?\n/)) {
-    const line = raw.trim();
-    if (!line) continue;
+  for (const raw of text.replace(/^﻿/, "").split(/\r?\n(?=\{)/)) {
+    const chunk = raw.trim();
+    if (!chunk) continue;
     let event;
     try {
-      event = JSON.parse(line);
+      event = JSON.parse(chunk);
     } catch {
       continue;
     }
