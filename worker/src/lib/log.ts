@@ -7,6 +7,7 @@ export interface LogFields {
   route: string;
   status: number;
   total_ms: number;
+  lang?: string;
   model?: string;
   prompt?: string;
   model_ms?: number;

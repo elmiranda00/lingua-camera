@@ -13,7 +13,7 @@ on one origin. It calls Workers AI for lookups and speech, and holds the D1 data
 4. Lookup: look the answer up in the cache (D1); on a miss, take one slot of the user's daily cap, build the prompt,
    call the model, parse the reply with `LookupResult` and retry once if invalid; write the answer to the cache after
    the response is sent.
-5. One log line per API request: ID, route, status, timings (`total_ms`, `db_ms`, `model_ms`, `ocr_ms` from the client), `cached`, model, prompt version.
+5. One log line per API request: ID, route, status, timings (`total_ms`, `db_ms`, `model_ms`, `ocr_ms` from the client), `cached`, `lang` (lookups), model, prompt version.
 
 ## Key files
 
