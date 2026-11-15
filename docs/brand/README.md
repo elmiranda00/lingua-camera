@@ -19,6 +19,7 @@ Master copies of the Lingua Camera logo. Not served: the app uses copies made fr
 | `glyph-dark-bg.svg` | Glyph only, for dark screens |
 | `glyph-light-bg.svg` | Glyph only, for light screens |
 | `app-icon-mono-white.svg`, `glyph-mono-black.svg` | One-colour versions |
+| `readme-banner.png` | Glyph + wordmark on navy, for the repo README. Made by `make-icons.mjs` |
 
 ## Design choices
 

@@ -1,54 +1,101 @@
-# lingua-camera
+<p align="center">
+  <img src="docs/brand/readme-banner.png" alt="Lingua Camera" width="560">
+</p>
 
-Phone web app: photograph a page or sign, tap a word, see its English meaning in context
-(plus pinyin for Chinese), hear it, and save it to a personal word bank.
-French → English and Mandarin (Simplified) → English. For up to 10 invited users; runs free on Cloudflare.
+<p align="center">
+  <a href="https://github.com/elmiranda00/lingua-camera/actions/workflows/ci.yml"><img src="https://github.com/elmiranda00/lingua-camera/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI/CD"></a>
+  <img src="https://img.shields.io/github/last-commit/elmiranda00/lingua-camera/main?label=last%20updated" alt="Last updated">
+  <img src="https://img.shields.io/badge/licence-Apache--2.0-1B2B5E" alt="Licence: Apache-2.0">
+</p>
 
-## Status
+<p align="center">
+  <img src="https://img.shields.io/badge/French-%E2%86%92%20English-20D8B5" alt="French to English">
+  <img src="https://img.shields.io/badge/Mandarin%20(Simplified)-%E2%86%92%20English%20%2B%20pinyin-20D8B5" alt="Mandarin (Simplified) to English, with pinyin">
+</p>
 
-M0 (scaffold) and M1 (photo to word boxes) are done. M2 (tap a word, see its meaning) is built and
-waiting for its phone checks. Audio, saving words and the word bank are M3. See
-[docs/SPEC.md](docs/SPEC.md) for the plan and the acceptance checklist.
+## About
 
-## Quick start
+**Point, tap, understand.** Lingua Camera helps you read and build your vocabulary out in the world. Take a photo of a page, a menu or a street sign, and every word becomes tappable.
 
-Needs Node 24 (see `.nvmrc`) and a free Cloudflare account.
+- **Currently supported**: French, Mandarin
+- **Gives you the word meaning within context**, with the part of speech, in plain English.
+- **Pinyin support** for Chinese words.
+- **Harder words are highlighted**: words beyond beginner level get a coloured outline, so you know where to look.
+- **Private by design**: the text is read on your phone within the browsedr and photos never leave the app
 
-```
-npm install
-npx wrangler login      # once; the Worker's AI binding needs it
-npm run db:migrate:local                 # once: create the local database
-npm run user:add -- "Your name"         # prints an invite link; open it in the browser to sign in
-npm run dev             # Worker + web app together
-```
+Planned features: hear translated words read aloud, save to a personal word bank.
 
-Every API call needs a signed-in user. `user:add` prints a link like `http://localhost:5173/join#<token>`; opening it
-signs that browser in. For the live app, add `--remote` (creates the user in the production database).
-
-| Command | What it does |
-| --- | --- |
-| `npm run test` | Unit tests, all packages |
-| `npm run test:e2e` | Browser smoke test (builds first) |
-| `npm run typecheck` / `npm run lint` | Type and lint checks |
-| `npm run assets` | Download OCR models (hash-checked) and runtime files into `web/public` (dev and build run it) |
-| `npm run wordlists` | Rebuild the tier word lists in `web/src/tiers/data` from pinned sources |
-| `npm run user:add -- "Name" [--remote]` | Create a user and print their invite link (shown once) |
-| `npm run p50 -- tail.log` | Lookup latency (p50, p95) from `npx wrangler tail --format json > tail.log` |
-| `npm run db:migrate:local` / `db:migrate:remote` | Apply D1 migrations |
-| `npm run build` | Build the web app to `web/dist` |
-| `npm run deploy` | Build, then deploy Worker and web app (CI normally does this) |
+*Lingua Camera is a personal project for a small group of invited readers and runs at no cost.*
 
 ## Layout
 
+**On the phone**
+
+| Part | What it does |
+| --- | --- |
+| Welcome | Invite links land here: a greeting in three languages, then one tap to the camera |
+| Camera | Live viewfinder, or pick a photo from the gallery; a language switch (FR / 中文) |
+| Word boxes | A tappable box over every word, styled by difficulty (normal, key word, saved) |
+| Translation sheet | Slides up with the meaning, part of speech and pinyin; tap another word to switch |
+
+**In the repo**
+
 | Folder | What's in it |
 | --- | --- |
-| [web/](web/README.md) | React app |
-| [worker/](worker/README.md) | Cloudflare Worker: API, D1 migrations, prompts |
-| [shared/](shared/README.md) | Zod schemas and limits used by both |
-| [docs/](docs/) | `SPEC.md` (the plan), `DECISIONS.md` (structural decisions) |
+| [web/](web/README.md) | The phone app (React) |
+| [worker/](worker/README.md) | The server: API, database, AI prompts |
+| [shared/](shared/README.md) | Data shapes and limits used by both |
+| [docs/](docs/) | The product spec, design decisions and brand assets |
 
-Everything the browser loads comes from our own origin: no CDNs, fonts or analytics.
+## How it's built
 
-## Licence
+```mermaid
+flowchart LR
+  A[Photo] --> B[On-phone OCR<br/>Web Worker + WASM]
+  B --> C[Word boxes<br/>FR / ZH word splitting]
+  C -- tap --> D[Cloudflare Worker<br/>API]
+  D --> E[(D1 cache<br/>+ daily limits)]
+  D --> F[Workers AI<br/>Qwen3 30B]
+```
 
-Apache-2.0. See [LICENSE](LICENSE).
+| Area | Choice |
+| --- | --- |
+| Front end | TypeScript, React 19, React Router, Vite; installable PWA with a service worker |
+| Reading text | PaddleOCR (PP-OCRv5 mobile models), running in the browser on ONNX Runtime (WASM, multi-threaded) |
+| Word splitting | `Intl.Segmenter` for both languages; Chinese pinyin computed on the phone |
+| Back end | Cloudflare Worker with Hono, D1 (SQLite) database |
+| Translation | Qwen3 30B on Cloudflare Workers AI, with versioned prompts |
+| Validation | Zod schemas shared by the app and the server; every request and model answer is checked |
+| Quality | Vitest unit tests, Playwright browser tests at phone width, CI/CD on GitHub Actions (deploys `main` after checks pass) |
+
+A few decisions worth noting:
+
+- **One origin only.** The app loads nothing from other sites (no CDNs, Google Fonts or analytics), enforced by a strict Content Security Policy.
+  Most third-party hosts are blocked in mainland China, so this keeps the app working there.
+- **Photos stay on the phone.** OCR runs in the browser; the server only ever sees the tapped word and its sentence.
+- **About 30 MB of OCR models download once** and are cached on the phone, so later photos read offline.
+- **Fast and free.** Repeat lookups come from a shared cache, and each user has a daily limit,
+  so the free AI allocation can't run out. Median lookup time is measured from the server logs.
+
+The full plan is in [docs/SPEC.md](docs/SPEC.md); structural decisions are in [docs/DECISIONS.md](docs/DECISIONS.md).
+
+## Licensing
+
+Lingua Camera's code is released under the [Apache License 2.0](LICENSE).
+
+It builds on these open projects:
+
+| Component | Used for | Licence |
+| --- | --- | --- |
+| [PaddleOCR.js](https://github.com/PaddlePaddle/PaddleOCR) and PP-OCRv5 mobile models | Reading text on the phone | Apache-2.0 |
+| [ONNX Runtime Web](https://github.com/microsoft/onnxruntime) | Running the OCR models | MIT |
+| [OpenCV.js](https://github.com/opencv/opencv) | Image processing for OCR | Apache-2.0 |
+| [Clipper](https://www.npmjs.com/package/clipper-lib) | Polygon maths for OCR | Boost Software License 1.0 |
+| [Qwen3 30B-A3B](https://github.com/QwenLM/Qwen3) (via Cloudflare Workers AI) | Meanings in context | Apache-2.0 |
+| [pinyin-pro](https://github.com/zh-lx/pinyin-pro) | Pinyin with tone marks | MIT |
+| [Lexique 3.83](http://www.lexique.org/) | French word frequency (key words) | CC BY-SA 4.0 |
+| HSK 3.0 word lists | Chinese beginner vocabulary (key words) | MIT |
+| React, React Router, Vite, Hono, Zod | App and server frameworks | MIT |
+| DM Sans, DM Serif Display, Space Grotesk | Brand fonts, bundled with the app | SIL Open Font License 1.1 |
+
+Full credits for the word lists are in [web/src/tiers/data/NOTICE.md](web/src/tiers/data/NOTICE.md), and the font licences in [web/src/fonts/](web/src/fonts/).

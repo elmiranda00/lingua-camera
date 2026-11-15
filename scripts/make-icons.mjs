@@ -1,4 +1,4 @@
-// Renders the app icon to the PNG sizes in web/public (output is committed; rerun only to change the design)
+// Renders the app icon to the PNG sizes in web/public, and the README banner (output is committed; rerun only to change the design)
 // Source: docs/brand/app-icon.svg. Run: node scripts/make-icons.mjs (uses the Playwright Chromium installed for tests)
 /* global console */
 import { chromium } from "@playwright/test";
@@ -43,4 +43,20 @@ for (const { file, svg, size, transparent } of TARGETS) {
   await page.close();
   console.log(`wrote ${file}`);
 }
+// README banner: glyph + wordmark (Space Grotesk, embedded so the render doesn't depend on installed fonts)
+const font = (await readFile(join(root, "web", "src", "fonts", "space-grotesk-latin-wght-normal.woff2"))).toString("base64");
+const banner = await browser.newPage({ viewport: { width: 880, height: 220 }, deviceScaleFactor: 2 });
+await banner.setContent(`<style>
+  @font-face { font-family: "Space Grotesk"; font-weight: 300 700; src: url(data:font/woff2;base64,${font}) format("woff2"); }
+  body { margin: 0; }
+  .card { width: 880px; height: 220px; box-sizing: border-box; display: flex; align-items: center; justify-content: center;
+    gap: 26px; border-radius: 28px; color: #fff; font: 400 60px "Space Grotesk";
+    background: linear-gradient(rgb(255 255 255 / 3%) 1px, transparent 1px) 0 0 / 42px 42px,
+      linear-gradient(90deg, rgb(255 255 255 / 3%) 1px, transparent 1px) 0 0 / 42px 42px, #071527; }
+  b { color: #20d8b5; font-weight: 700; }
+</style><div class="card">${glyph.replace("<g ", '<svg viewBox="16 16 68 68" width="104" height="104"><g ').concat("</svg>")}<span><b>Lingua</b> Camera</span></div>`);
+await banner.evaluate(() => document.fonts.ready);
+await banner.screenshot({ path: join(root, "docs", "brand", "readme-banner.png"), omitBackground: true });
+console.log("wrote docs/brand/readme-banner.png");
+
 await browser.close();
