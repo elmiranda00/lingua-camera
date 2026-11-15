@@ -1,6 +1,6 @@
 // Renders the app icon to the PNG sizes in web/public, and the README banner (output is committed; rerun only to change the design)
 // Source: docs/brand/app-icon.svg. Run: node scripts/make-icons.mjs (uses the Playwright Chromium installed for tests)
-/* global console */
+/* global console, document */ // document: used inside page.evaluate, which runs in the browser
 import { chromium } from "@playwright/test";
 import { readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
