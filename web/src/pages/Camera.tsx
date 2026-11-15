@@ -1,7 +1,9 @@
 // Camera page (home): viewfinder → photo → word boxes
 import { LIMITS, type Lang } from "@lingua-camera/shared";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useLocation, useNavigate } from "react-router";
 import { api } from "../api/client.ts";
+import { wantsCameraStart } from "../camera/autoStart.ts";
 import "../camera/camera.css";
 import { useLang, useWarmUp } from "../camera/hooks.ts";
 import { LangChip } from "../camera/LangChip.tsx";
@@ -43,8 +45,12 @@ export function Camera() {
   const [lang, setLang] = useLang();
   const progress = useWarmUp(lang);
   const [phase, setPhase] = useState<Phase>({ kind: "live" });
-  // The camera stays off until the user taps the camera icon
-  const [camera, setCamera] = useState<"off" | "starting" | "live" | "unavailable">("off");
+  const location = useLocation();
+  const navigate = useNavigate();
+  // The camera stays off until the user taps the start box, or "Open the Camera" on the welcome screen
+  const [camera, setCamera] = useState<"off" | "starting" | "live" | "unavailable">(() =>
+    wantsCameraStart(location.state) ? "starting" : "off",
+  );
   const [selected, setSelected] = useState<TieredBox | null>(null);
   const { state: sheet, controller } = useWordLookup();
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -57,6 +63,11 @@ export function Camera() {
     },
     [],
   );
+
+  // Drop the start request from history, so a reload doesn't start the camera on its own
+  useEffect(() => {
+    if (wantsCameraStart(location.state)) void navigate(location.pathname, { replace: true, state: null });
+  }, [location.state, location.pathname, navigate]);
 
   // Fetch pinyin-pro while the user takes the photo, so the first lookup doesn't wait for it
   useEffect(() => {

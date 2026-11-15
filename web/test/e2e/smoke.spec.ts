@@ -157,6 +157,9 @@ test("app loads on one origin with no CSP violations or errors", async ({ page, 
     // The smoke Worker has no database, so only the cases that never call the API run here
     await page.goto("/join");
     await expect(page.getByText("Open the invite link you were sent.")).toBeVisible();
+    // Not signed in: no greeting, no signed-in line
+    await expect(page.getByRole("heading", { name: "Sign-in needed" })).toBeVisible();
+    await expect(page.getByText("You are signed in")).toHaveCount(0);
     await page.goto("/join#abc");
     await expect(page.getByText("This link looks incomplete.")).toBeVisible();
     await collectViolations();

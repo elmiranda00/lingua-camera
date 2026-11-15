@@ -1,0 +1,320 @@
+/* Welcome / sign-in pages: navy, grid, teal accent. Mobile first (375 px)
+ * Every rule is scoped to .welcome: all route CSS is loaded globally */
+html:has(.welcome),
+body:has(.welcome) {
+  margin: 0;
+  background: #071527;
+}
+
+.welcome {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  min-height: 100vh;
+  min-height: 100svh;
+  overflow: hidden;
+  padding: max(28px, env(safe-area-inset-top)) 20px max(30px, env(safe-area-inset-bottom));
+  background:
+    linear-gradient(rgb(255 255 255 / 1.8%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(255 255 255 / 1.8%) 1px, transparent 1px),
+    #071527;
+  background-size: 42px 42px;
+  color: #f7f7f3;
+  font-family: "DM Sans", system-ui, sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+/* The app has no CSS reset; these are the few the design needs.
+ * :where() keeps them at zero specificity, so the classes below win */
+:where(.welcome, .welcome *, .welcome *::before, .welcome *::after) {
+  box-sizing: border-box;
+}
+
+:where(.welcome) :where(h1, p) {
+  margin: 0;
+}
+
+:where(.welcome) button {
+  font: inherit;
+  cursor: pointer;
+}
+
+.welcome-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.welcome-glow {
+  position: absolute;
+  z-index: -1;
+  width: 420px;
+  height: 420px;
+  border-radius: 50%;
+  background: #14b8a6;
+  opacity: 0.1;
+  filter: blur(110px);
+  pointer-events: none;
+}
+
+.welcome-glow-top {
+  top: -300px;
+  right: -140px;
+}
+
+.welcome-glow-bottom {
+  bottom: -330px;
+  left: -100px;
+}
+
+/* Wordmark: glyph ≈ 1.75 × font size, gap ≈ 0.44 × font size */
+.welcome-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  margin-inline: auto;
+  color: #fff;
+  font-family: "Space Grotesk", system-ui, sans-serif;
+  font-size: 18px;
+  font-weight: 400;
+}
+
+.welcome-brand-glyph {
+  opacity: 0.85;
+}
+
+.welcome-wordmark-lingua {
+  color: #20d8b5;
+  font-weight: 700;
+}
+
+.welcome-content {
+  position: relative;
+  align-self: center;
+  width: min(760px, 100%);
+  margin: 24px auto;
+  padding: 48px 12px;
+  text-align: center;
+}
+
+.welcome-frame {
+  position: absolute;
+  inset: 0;
+  opacity: 0.42;
+}
+
+.welcome-corner {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  border: 0 solid #20d8b5;
+}
+
+.welcome-corner-tl {
+  top: 0;
+  left: 0;
+  border-top-width: 2px;
+  border-left-width: 2px;
+  border-radius: 6px 0 0;
+}
+
+.welcome-corner-tr {
+  top: 0;
+  right: 0;
+  border-top-width: 2px;
+  border-right-width: 2px;
+  border-radius: 0 6px 0 0;
+}
+
+.welcome-corner-bl {
+  bottom: 0;
+  left: 0;
+  border-bottom-width: 2px;
+  border-left-width: 2px;
+  border-radius: 0 0 0 6px;
+}
+
+.welcome-corner-br {
+  right: 0;
+  bottom: 0;
+  border-right-width: 2px;
+  border-bottom-width: 2px;
+  border-radius: 0 0 6px;
+}
+
+/* Chinese has no glyphs in DM Serif Display: fall back to a system serif CJK face */
+.welcome-heading,
+.welcome-message-title {
+  color: #f7f7f3;
+  font-family: "DM Serif Display", "Songti SC", "Noto Serif CJK SC", "Noto Serif SC", Georgia, serif;
+  font-weight: 400;
+  letter-spacing: -0.04em;
+}
+
+.welcome-heading {
+  font-size: clamp(44px, 15vw, 66px);
+  line-height: 0.98;
+}
+
+/* Mobile: greeting and name on separate lines */
+.welcome-greeting-line,
+.welcome-name {
+  display: block;
+}
+
+.welcome-name {
+  margin-top: 6px;
+  color: #20d8b5;
+  text-shadow: 0 0 38px rgb(32 216 181 / 24%);
+  overflow-wrap: anywhere;
+}
+
+.welcome-greeting {
+  display: inline-block;
+  animation: welcome-greeting-in 500ms cubic-bezier(0.2, 0.75, 0.25, 1) both;
+}
+
+.welcome-intro {
+  max-width: 420px;
+  margin: 24px auto 0;
+  color: #8f9690;
+  font-size: clamp(14px, 2vw, 16px);
+  line-height: 1.6;
+}
+
+.welcome-message-title {
+  font-size: clamp(36px, 10vw, 56px);
+  line-height: 1.05;
+}
+
+.welcome-actions {
+  width: min(460px, 100%);
+  margin-inline: auto;
+  text-align: center;
+}
+
+.welcome-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  color: #c6cac5;
+  font-size: 13px;
+}
+
+.welcome-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #20d8b5;
+  box-shadow: 0 0 12px rgb(32 216 181 / 85%);
+}
+
+.welcome-camera-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 58px;
+  border: 1px solid #ccfbf1;
+  border-radius: 999px;
+  background: #f4f6ee;
+  color: #0b0d0c;
+  font-size: 15px;
+  font-weight: 600;
+  box-shadow: 0 12px 40px rgb(0 0 0 / 25%);
+  transition:
+    transform 180ms ease,
+    background 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.welcome-camera-button svg {
+  width: 20px;
+  height: 20px;
+}
+
+.welcome-camera-button:hover {
+  transform: translateY(-2px);
+  background: #20d8b5;
+  box-shadow: 0 16px 46px rgb(32 216 181 / 18%);
+}
+
+.welcome-camera-button:active {
+  transform: translateY(0);
+}
+
+.welcome-camera-button:focus-visible {
+  outline: 3px solid rgb(32 216 181 / 50%);
+  outline-offset: 3px;
+}
+
+.welcome-note {
+  margin-top: 12px;
+  color: #7a817b;
+  font-size: 11px;
+}
+
+@media (min-width: 641px) {
+  .welcome {
+    padding-inline: clamp(22px, 6vw, 64px);
+  }
+
+  .welcome-brand {
+    margin-inline: 0;
+  }
+
+  .welcome-content {
+    padding: clamp(48px, 9vw, 92px) 24px;
+  }
+
+  .welcome-heading {
+    font-size: clamp(48px, 9vw, 86px);
+  }
+
+  .welcome-greeting-line,
+  .welcome-name {
+    display: inline;
+  }
+
+  .welcome-name {
+    margin-top: 0;
+  }
+}
+
+@keyframes welcome-greeting-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+    filter: blur(5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+/* The greeting still changes, without the slide and fade */
+@media (prefers-reduced-motion: reduce) {
+  .welcome-greeting {
+    animation: none;
+  }
+
+  .welcome-camera-button {
+    transition: none;
+  }
+
+  .welcome-camera-button:hover {
+    transform: none;
+  }
+}
