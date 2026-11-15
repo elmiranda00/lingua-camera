@@ -1,5 +1,6 @@
 // Web app entry
 import "@lingua-camera/shared/browser-setup"; // must stay first: see that file
+import "./fonts/fonts.css";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App.tsx";

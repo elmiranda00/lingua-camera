@@ -35,6 +35,7 @@ app's hashed files, so the ~30 MB download happens once. `npm run assets` puts t
 | `src/pages/` | `Camera` (home), `Join` (invite-link sign-in), `About`, `NotFound`, `Loading`, `RouteError`, loaders |
 | `src/auth/` | Sign-in token in localStorage (`token.ts`) and the invite-link flow (`join.ts`) |
 | `src/lookup/` | Translation sheet: lookup controller (cache, cancel, errors), React hook, `WordSheet` |
+| `src/fonts/` | Brand fonts (woff2, latin subset), their `@font-face` rules and OFL licences |
 | `src/brand/` | `Glyph`: the app glyph as an inline SVG (masters in `docs/brand/`) |
 | `src/camera/` | Camera page pieces: viewfinder, photo view, word boxes, zoom. See its README |
 | `public/sw.js` | Service worker: caches OCR files and the app |
@@ -90,6 +91,8 @@ npm run typecheck -w @lingua-camera/web
 | clipper-lib 6.4.2 | Boost Software License 1.0 | Transitive: polygon offsets. Permissive; accepted as an exception to the MIT/Apache/BSD preference |
 | js-yaml 4.3.2 | MIT | Transitive: reads model config |
 
+Fonts (files, not packages, from Fontsource 5.3.0): DM Sans, DM Serif Display, Space Grotesk, all SIL OFL 1.1. Licences: `src/fonts/OFL-*.txt`.
+
 Word lists (data, not packages): Lexique 3.83 (CC BY-SA 4.0) and HSK 3.0 levels 1–2 (MIT repository). Credits: `src/tiers/data/NOTICE.md`.
 
 OCR models (not npm packages, fetched by `scripts/ocr-assets.mjs`): PP-OCRv5 mobile detection,
@@ -99,6 +102,7 @@ Chinese recognition and Latin recognition (Apache-2.0, PaddlePaddle).
 
 - **Data router with per-route loaders and error pages**, so data loading and failure handling live in one place.
 - **Sign-in token in localStorage** (as the spec says), checked with `/api/me` before it is saved. The fragment is removed from the address bar only after that succeeds, so a failed attempt can be retried by reloading.
+- **Fonts are bundled, not linked:** a font CDN breaks the one-origin rule and is blocked in China. Latin subset only (French fits); Chinese uses the phone's own fonts.
 - **Every API response is validated** against a `shared` schema; failures are logged with the request ID only.
 - **Zod runs without `eval`** because the CSP forbids it. `browser-setup` must stay the first import in `main.tsx`.
 - **Our own OCR worker**, not PaddleOCR's prebuilt one: the prebuilt worker bundles a WebGPU ONNX Runtime
