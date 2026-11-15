@@ -1,4 +1,4 @@
-// Lookup latency from Worker log lines: p50 and p95 of total_ms, uncached and cached apart
+// Lookup latency from Worker log lines: p50 and p95 of total_ms, per language, uncached and cached apart
 //
 // npx wrangler tail --format json > tail.log      (leave running while you tap words, then Ctrl+C)
 // node scripts/p50.mjs tail.log
@@ -15,7 +15,7 @@ if (!file) {
 // Each tail event carries our JSON log line as a string in logs[].message[]
 // Events are one per line or pretty-printed (PowerShell adds a BOM); each starts with "{" in column 0
 function* logLines(text) {
-  for (const raw of text.replace(/^﻿/, "").split(/\r?\n(?=\{)/)) {
+  for (const raw of text.replace(/^\uFEFF/, "").split(/\r?\n(?=\{)/)) {
     const chunk = raw.trim();
     if (!chunk) continue;
     let event;
@@ -40,7 +40,9 @@ function* logLines(text) {
 
 const percentile = (sorted, p) => sorted[Math.min(sorted.length - 1, Math.ceil((p / 100) * sorted.length) - 1)];
 
-const groups = { uncached: [], cached: [] };
+// Keys: "<language or all> uncached|cached". Lines from before `lang` was logged count as "unknown"
+const groups = new Map();
+const add = (key, ms) => groups.set(key, [...(groups.get(key) ?? []), ms]);
 let skipped = 0;
 for (const entry of logLines(readFileSync(file, "utf8"))) {
   if (entry.route !== "POST /api/lookup" || typeof entry.total_ms !== "number") continue;
@@ -48,18 +50,24 @@ for (const entry of logLines(readFileSync(file, "utf8"))) {
     skipped++;
     continue;
   }
-  groups[entry.cached ? "cached" : "uncached"].push(entry.total_ms);
+  const kind = entry.cached ? "cached" : "uncached";
+  add(`all ${kind}`, entry.total_ms);
+  add(`${entry.lang ?? "unknown"} ${kind}`, entry.total_ms);
 }
 
-for (const [name, values] of Object.entries(groups)) {
-  const sorted = [...values].sort((a, b) => a - b);
-  if (sorted.length === 0) {
-    console.log(`${name}: no lookups`);
-    continue;
+const names = ["all", ...[...new Set([...groups.keys()].map((k) => k.split(" ")[0]))].filter((n) => n !== "all").sort()];
+for (const name of names) {
+  for (const kind of ["uncached", "cached"]) {
+    const sorted = [...(groups.get(`${name} ${kind}`) ?? [])].sort((a, b) => a - b);
+    const label = `${name} ${kind}:`.padEnd(18);
+    if (sorted.length === 0) {
+      console.log(`${label} no lookups`);
+      continue;
+    }
+    console.log(
+      `${label} n=${sorted.length}  p50=${percentile(sorted, 50)} ms  p95=${percentile(sorted, 95)} ms  max=${sorted.at(-1)} ms`,
+    );
   }
-  console.log(
-    `${name}: n=${sorted.length}  p50=${percentile(sorted, 50)} ms  p95=${percentile(sorted, 95)} ms  max=${sorted.at(-1)} ms`,
-  );
 }
 if (skipped) console.log(`(${skipped} lookups with a non-200 status left out)`);
 console.log("Target: uncached p50 under 2000 ms (Worker time only).");

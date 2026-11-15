@@ -235,6 +235,10 @@ describe("logging", () => {
     expect(hit).not.toHaveProperty("model_ms");
   });
 
+  it("records the language", async () => {
+    expect(await logged(okAi())).toMatchObject({ lang: validLookup.lang });
+  });
+
   it("records the client's ocr_ms", async () => {
     expect(await logged(okAi(), { "x-ocr-ms": "1234" })).toMatchObject({ ocr_ms: 1234 });
   });

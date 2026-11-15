@@ -22,6 +22,7 @@ export const lookup = new Hono<AppEnv>().post("/", requireUser, async (c) => {
 
   const model = c.env.LOOKUP_MODEL;
   const prompt = LOOKUP_LLM.prompt.version;
+  const lang = body.data.lang;
   const respond = (result: LookupResult, cached: boolean) => {
     const response: LookupResponse = { ...result, cached, requestId: c.get("requestId") };
     return c.json(response);
@@ -30,18 +31,19 @@ export const lookup = new Hono<AppEnv>().post("/", requireUser, async (c) => {
   const key = await cacheKey(body.data, model, prompt);
   const hit = await timed(c, () => readCache(c.env.DB, key));
   if (hit) {
-    c.set("logExtra", { model, prompt, cached: true });
+    c.set("logExtra", { lang, model, prompt, cached: true });
     return respond(hit, true);
   }
 
   const allowed = await timed(c, () => reserve(c.env.DB, user.id, "lookups", LIMITS.lookupsPerDay));
   if (!allowed) {
-    c.set("logExtra", { model, prompt, cached: false, error: "daily_limit" });
+    c.set("logExtra", { lang, model, prompt, cached: false, error: "daily_limit" });
     return apiError(c, 429, "rate_limited", "Daily limit reached, resets at 00:00 UTC.");
   }
 
   const outcome = await runLookup(c.env.AI, model, LOOKUP_LLM, body.data);
   c.set("logExtra", {
+    lang,
     model,
     prompt,
     model_ms: outcome.modelMs,
