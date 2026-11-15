@@ -6,7 +6,7 @@ The pieces of the camera page: live viewfinder, taking a photo, showing it with 
 
 ## How it works
 
-1. The page opens with a black box and a camera icon (`StartCamera`); the camera is off. Tapping it starts `Viewfinder`, which asks for the rear camera. If that is blocked or missing, the page shows "Take photo" and "Choose from gallery" instead. After Retake the viewfinder comes straight back.
+1. The page opens with a black box and the app glyph (`StartCamera`); the camera is off. Tapping it starts `Viewfinder`, which asks for the rear camera. If that is blocked or missing, the page shows "Take photo" and "Choose from gallery" instead. After Retake the viewfinder comes straight back.
 2. The shutter (`captureFrame`) or a picked file becomes a photo. `toOcrBitmap` shrinks it to 1600 px for OCR; the original is shown on screen.
 3. The page runs OCR and the tier rules, then `PhotoView` draws one `WordButton` per word over the photo.
 4. Each box is a real button, rotated to follow tilted text. Pinch, drag or wheel zoom moves the photo and boxes together.
@@ -16,7 +16,7 @@ The pieces of the camera page: live viewfinder, taking a photo, showing it with 
 
 | File | Role |
 | --- | --- |
-| `StartCamera.tsx` | Black box with the camera icon shown before the camera is on |
+| `StartCamera.tsx` | Black box with the app glyph shown before the camera is on |
 | `Viewfinder.tsx` | Camera stream; reports ready or unavailable |
 | `PhotoView.tsx`, `useZoom.ts`, `zoom.ts` | Photo, boxes, pinch and drag; the math is in `zoom.ts` |
 | `WordButton.tsx`, `geometry.ts` | One word box; quad → rotated rectangle, photo sizing |

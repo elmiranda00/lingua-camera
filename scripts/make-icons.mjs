@@ -1,36 +1,36 @@
 // Renders the app icon to the PNG sizes in web/public (output is committed; rerun only to change the design)
-// Run: node scripts/make-icons.mjs (uses the Playwright Chromium already installed for tests)
+// Source: docs/brand/app-icon.svg. Run: node scripts/make-icons.mjs (uses the Playwright Chromium installed for tests)
 /* global console */
 import { chromium } from "@playwright/test";
-import { writeFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const out = join(dirname(fileURLToPath(import.meta.url)), "..", "web", "public");
+const root = join(dirname(fileURLToPath(import.meta.url)), "..");
+const out = join(root, "web", "public");
 
-const GLYPH = `
-  <path d="M8 20a4 4 0 0 1 4-4h8l3-5h18l3 5h8a4 4 0 0 1 4 4v28a4 4 0 0 1-4 4H12a4 4 0 0 1-4-4z"
-        fill="none" stroke="#fff" stroke-width="3" stroke-linejoin="round"/>
-  <circle cx="32" cy="34" r="10" fill="none" stroke="#fff" stroke-width="3"/>
-  <circle cx="32" cy="34" r="3" fill="#e5251b"/>
-  <rect x="22" y="56" width="20" height="3.5" rx="1.75" fill="#e5251b"/>`;
+const source = await readFile(join(root, "docs", "brand", "app-icon.svg"), "utf8");
+const tile = source.match(/<rect [^>]*fill="(#[0-9A-Fa-f]{6})"/)?.[1];
+const glyph = source.match(/<rect [^>]*\/>(.*)<\/svg>/s)?.[1];
+if (!tile || !glyph) throw new Error("docs/brand/app-icon.svg: expected a <rect> tile followed by the glyph");
 
-// Rounded square for browsers and the home screen
-const ROUNDED = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" rx="13" fill="#000"/>${GLYPH}
+// Rounded tile, as drawn in the source: favicon and the 192/512 "any" icons
+const ROUNDED = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <rect width="100" height="100" rx="22" fill="${tile}"/>${glyph}
 </svg>`;
 
-// Full-bleed with the glyph inside the safe zone, for icon masks (Android) and iOS
-const MASKABLE = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" fill="#000"/>
-  <g transform="translate(32 32) scale(0.68) translate(-32 -32)">${GLYPH}</g>
+// Full-bleed square; the phone applies its own mask. Android's maskable safe zone is a circle of
+// radius 40, so the glyph shrinks there; iOS only rounds the corners, so it keeps full size
+const fullBleed = (scale) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <rect width="100" height="100" fill="${tile}"/>
+  <g transform="translate(50 50) scale(${scale}) translate(-50 -50)">${glyph}</g>
 </svg>`;
 
 const TARGETS = [
   { file: "icon-192.png", svg: ROUNDED, size: 192, transparent: true },
   { file: "icon-512.png", svg: ROUNDED, size: 512, transparent: true },
-  { file: "icon-maskable-512.png", svg: MASKABLE, size: 512, transparent: false },
-  { file: "apple-touch-icon.png", svg: MASKABLE, size: 180, transparent: false },
+  { file: "icon-maskable-512.png", svg: fullBleed(0.85), size: 512, transparent: false },
+  { file: "apple-touch-icon.png", svg: fullBleed(1), size: 180, transparent: false },
 ];
 
 await writeFile(join(out, "icon.svg"), `${ROUNDED}\n`);

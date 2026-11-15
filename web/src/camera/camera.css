@@ -65,7 +65,7 @@ body:has(.camera) #root {
   object-fit: cover;
 }
 
-/* Black box with the camera icon, before the camera is on */
+/* Black box with the app glyph, before the camera is on */
 .camera-start {
   display: flex;
   flex-direction: column;
@@ -79,13 +79,6 @@ body:has(.camera) #root {
   color: #fff;
   font-size: 16px;
   cursor: pointer;
-}
-
-.camera-start-bar {
-  width: 72px;
-  height: 6px;
-  border-radius: 3px;
-  background: #e5251b;
 }
 
 .camera-start-label {

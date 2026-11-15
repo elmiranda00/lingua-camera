@@ -35,9 +35,10 @@ app's hashed files, so the ~30 MB download happens once. `npm run assets` puts t
 | `src/pages/` | `Camera` (home), `Join` (invite-link sign-in), `About`, `NotFound`, `Loading`, `RouteError`, loaders |
 | `src/auth/` | Sign-in token in localStorage (`token.ts`) and the invite-link flow (`join.ts`) |
 | `src/lookup/` | Translation sheet: lookup controller (cache, cancel, errors), React hook, `WordSheet` |
+| `src/brand/` | `Glyph`: the app glyph as an inline SVG (masters in `docs/brand/`) |
 | `src/camera/` | Camera page pieces: viewfinder, photo view, word boxes, zoom. See its README |
 | `public/sw.js` | Service worker: caches OCR files and the app |
-| `public/manifest.webmanifest`, icons | Makes the app installable (Add to Home Screen). Icons are made by `../scripts/make-icons.mjs` |
+| `public/manifest.webmanifest`, icons | Makes the app installable (Add to Home Screen). Icons are made by `../scripts/make-icons.mjs` from `docs/brand/app-icon.svg` |
 | `src/api/client.ts` | API client: validation, typed errors, 10 s timeout, request-ID logging |
 | `src/ocr/` | On-phone OCR in a Web Worker, model download with progress. See its README |
 | `src/lang/` | Per-language modules (word splitting, word boxes, key-word rule). See its README |
