@@ -18,6 +18,10 @@ camera: take or pick a photo, read it on the phone, and get a tappable box on ev
 (see `src/ocr/`) → one polygon and text per **line** → `src/lang/` splits lines into word boxes →
 `src/tiers/` marks each Saved, Key or Normal → boxes are drawn over the photo.
 
+**Invite link** (see `src/welcome/`): `/join#<token>` → the loader checks the token with `/api/me` and saves it → the
+welcome screen greets the user by name ("Welcome", "Bienvenue", "你好", one every 2 s) and says they are signed in. "Open
+the Camera" goes to `/` with router state that starts the camera at once, then drops that state so a reload doesn't.
+
 **Tap to translate** (see `src/lookup/`): a tap on a box asks `createSentenceFinder` for the word's sentence and
 starts a lookup (`POST /api/lookup`). A bottom sheet shows the meaning, part of speech and, for Chinese, pinyin
 (from `pinyin-pro`, loaded on demand), all at once when the answer arrives. Tapping another word replaces the content.
@@ -32,9 +36,10 @@ app's hashed files, so the ~30 MB download happens once. `npm run assets` puts t
 | `src/main.tsx` | Entry point |
 | `src/App.tsx` | Creates the browser router |
 | `src/routes.tsx` | Route table: loader, loading page and error page per route |
-| `src/pages/` | `Camera` (home), `Join` (invite-link sign-in), `About`, `NotFound`, `Loading`, `RouteError`, loaders |
+| `src/pages/` | `Camera` (home), `Join` (invite-link sign-in: welcome screen or what went wrong), `About`, `NotFound`, `Loading`, `RouteError`, loaders |
 | `src/auth/` | Sign-in token in localStorage (`token.ts`) and the invite-link flow (`join.ts`) |
 | `src/lookup/` | Translation sheet: lookup controller (cache, cancel, errors), React hook, `WordSheet` |
+| `src/welcome/` | Welcome screen (rotating greeting, name, Open the Camera) and the navy shell every `/join` state uses |
 | `src/fonts/` | Brand fonts (woff2, latin subset), their `@font-face` rules and OFL licences |
 | `src/brand/` | `Glyph`: the app glyph as an inline SVG (masters in `docs/brand/`) |
 | `src/camera/` | Camera page pieces: viewfinder, photo view, word boxes, zoom. See its README |
@@ -50,13 +55,14 @@ app's hashed files, so the ~30 MB download happens once. `npm run assets` puts t
 | `test/` | Unit tests, mirroring `src/` |
 | `test/ocr/__fixtures__/` | Real OCR output (JSON) from a French book page and a Chinese menu |
 | `test/e2e/smoke.spec.ts` | Browser smoke test: loads the built app through the Worker, fails on CSP violations, errors or other origins |
+| `test/e2e/welcome.spec.ts` | Invite link → welcome screen with the name and the brand fonts → Open the Camera starts the live camera (fake `/api/me`, fake camera) |
 
 ## Interfaces
 
 | Route | Page |
 | --- | --- |
 | `/` | Camera |
-| `/join#<token>` | Signs in from an invite link |
+| `/join#<token>` | Signs in from an invite link, then shows the welcome screen. Opened later without a link, it checks the saved token and welcomes again |
 | `/about` | Shows the API version |
 | `*` | Page not found |
 
@@ -102,6 +108,9 @@ Chinese recognition and Latin recognition (Apache-2.0, PaddlePaddle).
 
 - **Data router with per-route loaders and error pages**, so data loading and failure handling live in one place.
 - **Sign-in token in localStorage** (as the spec says), checked with `/api/me` before it is saved. The fragment is removed from the address bar only after that succeeds, so a failed attempt can be retried by reloading.
+- **The welcome screen is the `/join` signed-in state,** not its own route: the invite link already lands there and has just checked the token, so "You are signed in" is always true. Other outcomes use the same navy shell.
+- **Welcome CSS is plain CSS, every rule under `.welcome`,** because all route CSS is loaded globally. Its few reset rules sit in `:where()` so component classes win.
+- **The welcome heading has one fixed accessible name** ("Welcome, Name"); the rotating text is hidden from screen readers. With reduced motion the greeting still changes, without the animation.
 - **Fonts are bundled, not linked:** a font CDN breaks the one-origin rule and is blocked in China. Latin subset only (French fits); Chinese uses the phone's own fonts.
 - **Every API response is validated** against a `shared` schema; failures are logged with the request ID only.
 - **Zod runs without `eval`** because the CSP forbids it. `browser-setup` must stay the first import in `main.tsx`.

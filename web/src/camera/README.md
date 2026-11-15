@@ -23,6 +23,7 @@ The pieces of the camera page: live viewfinder, taking a photo, showing it with 
 | `photo.ts` | Frame capture and downscaling |
 | `LangChip.tsx`, `settings.ts` | Language switch, remembered in `localStorage` |
 | `PhotoPickers.tsx` | Gallery and "Take photo" fallback |
+| `autoStart.ts` | Router state that starts the camera on arrival, and its check |
 | `ModelStatus.tsx`, `hooks.ts` | First-run download banner; small hooks |
 | `camera.css` | Layout and the three box styles |
 
@@ -38,7 +39,7 @@ Unit tests: `web/test/camera` (geometry, zoom). The browser smoke test covers th
 
 - **Box styles by tier:** Saved grey fill, Key thicker orange rounded outline (thickness follows box size so dense text stays readable), Normal thin light outline.
 - **Boxes are real buttons** with labels (word, and "key word" or "saved"), keyboard focusable.
-- **The camera starts only on a tap,** so opening the app never triggers a permission prompt.
+- **The camera starts only on a tap,** so opening the app never triggers a permission prompt. The tap is either the start box or "Open the Camera" on the welcome screen (router state `START_CAMERA`, `autoStart.ts`), which skips the start box.
 - **The camera route has no loader,** so it shows at once. The API version moved to `/about`.
 - **Gestures use pointer events,** with a 6 px threshold so a tap on a box isn't mistaken for a drag.
 - **Language is remembered per phone** and defaults to French.
