@@ -17,8 +17,8 @@ export interface LookupLlmConfig {
   maxTokens: number;
   /** Total model calls per lookup: the first call plus retries on invalid output. */
   maxAttempts: number;
-  /** Appended to the user message. "/no_think" turns off Qwen3's thinking mode. */
-  userSuffix: string;
+  /** Sent as chat_template_kwargs. Qwen 3.8 ignores "/no_think"; only enable_thinking: false turns thinking off. */
+  chatTemplateKwargs: Record<string, unknown>;
 }
 
 export const LOOKUP_LLM: LookupLlmConfig = {
@@ -26,5 +26,5 @@ export const LOOKUP_LLM: LookupLlmConfig = {
   temperature: 0.2,
   maxTokens: 400,
   maxAttempts: 2,
-  userSuffix: "\n/no_think",
+  chatTemplateKwargs: { enable_thinking: false },
 };

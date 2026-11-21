@@ -23,6 +23,16 @@ export function replyText(output: unknown): string | null {
   return typeof content === "string" ? content : null;
 }
 
+/**
+ * Log reason for a thrown model call: name plus Workers AI's numeric code (e.g. 5028 = model deprecated).
+ * Only the leading code is kept: the rest of the message is never logged.
+ */
+export function modelThrew(err: unknown): string {
+  if (!(err instanceof Error)) return "model_threw";
+  const code = /^(?:\w+:\s*)?(\d{3,5}):/.exec(err.message)?.[1];
+  return code ? `model_threw:${err.name}:${code}` : `model_threw:${err.name}`;
+}
+
 /** Strips any thinking block and code fences, then parses the outermost JSON object. */
 export function parseLookupReply(text: string): LookupResult | null {
   const cleaned = text.replace(/<think>[\s\S]*?<\/think>/g, "");
@@ -48,8 +58,9 @@ export async function runLookup(
   const input = {
     messages: [
       { role: "system", content: config.prompt.text },
-      { role: "user", content: `${JSON.stringify(req)}${config.userSuffix}` },
+      { role: "user", content: JSON.stringify(req) },
     ],
+    chat_template_kwargs: config.chatTemplateKwargs,
     max_tokens: config.maxTokens,
     temperature: config.temperature,
   };
@@ -65,7 +76,7 @@ export async function runLookup(
       }
       reason = text === null ? "empty_reply" : "invalid_json";
     } catch (err) {
-      reason = err instanceof Error ? `model_threw:${err.name}` : "model_threw";
+      reason = modelThrew(err);
     }
   }
   return { ok: false, reason, attempts: config.maxAttempts, modelMs: Date.now() - started };

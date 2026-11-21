@@ -3,6 +3,12 @@
 Structural decisions, or ones that affect other parts of the system or later milestones.
 Newest first. Format: **Date · Decision**, then why and what it affects.
 
+## 2026-11-21 · Lookup model is now `@cf/qwen/qwen3.8-27b`, thinking off via `enable_thinking`
+
+- **Decision:** `LOOKUP_MODEL` moves from `qwen3-30b-a3b-fp8` to `qwen3.8-27b`. Thinking is turned off with `chat_template_kwargs: { enable_thinking: false }`, not `/no_think`.
+- **Why:** Workers AI retired the old model on 2026-11-20 (error 5028), so every lookup failed. In a 6-word fr/zh test the new model gave 6/6 valid replies on the first attempt, ~2 s `model_ms`, ~47 neurons each. With only `/no_think` it kept thinking (5–51 s, 2/6 empty). `gemma-4-26b-a4b-it` gave 0/6.
+- **Affects:** `worker/wrangler.jsonc`, `worker/src/llm.ts`, `worker/src/lib/model.ts`. The lookup cache starts fresh because the model is part of the key. Failed calls now log the Workers AI code (`model_threw:AiError:<code>`).
+
 ## 2026-11-14 · Lookup cache shared across users, daily cap per user, both in D1
 
 - **Decision:** `lookup_cache` holds one validated answer per hash of (language, model, prompt version, word, sentence), shared by all users and never containing the text. Each user gets 150 model lookups and 100 speech calls per UTC day (`usage` table); cache hits don't count, and a slot is returned if the model fails.
@@ -111,7 +117,7 @@ Newest first. Format: **Date · Decision**, then why and what it affects.
 
 ## 2026-11-12 · Qwen3 thinking off (verified); JSON mode not used
 
-- **Decision:** thinking is turned off with Qwen3's `/no_think` switch, and any stray
+- **Decision:** thinking is turned off (now `enable_thinking: false`; see 2026-11-21), and any stray
   `<think>` block is stripped before parsing. JSON mode is not used; replies are parsed
   tolerantly and always validated with Zod.
 - **Why:** thinking adds seconds per lookup (target p50 < 2 s).

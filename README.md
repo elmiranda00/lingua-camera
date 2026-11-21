@@ -55,7 +55,7 @@ flowchart LR
   B --> C[Word boxes<br/>FR / ZH word splitting]
   C -- tap --> D[Cloudflare Worker<br/>API]
   D --> E[(D1 cache<br/>+ daily limits)]
-  D --> F[Workers AI<br/>Qwen3 30B]
+  D --> F[Workers AI<br/>Qwen 3.8 27B]
 ```
 
 | Area | Choice |
@@ -64,7 +64,7 @@ flowchart LR
 | Reading text | PaddleOCR (PP-OCRv5 mobile models), running in the browser on ONNX Runtime (WASM, multi-threaded) |
 | Word splitting | `Intl.Segmenter` for both languages; Chinese pinyin computed on the phone |
 | Back end | Cloudflare Worker with Hono, D1 (SQLite) database |
-| Translation | Qwen3 30B on Cloudflare Workers AI, with versioned prompts |
+| Translation | Qwen 3.8 27B on Cloudflare Workers AI, with versioned prompts |
 | Validation | Zod schemas shared by the app and the server; every request and model answer is checked |
 | Quality | Vitest unit tests, Playwright browser tests at phone width, CI/CD on GitHub Actions (deploys `main` after checks pass) |
 
@@ -91,7 +91,7 @@ It builds on these open projects:
 | [ONNX Runtime Web](https://github.com/microsoft/onnxruntime) | Running the OCR models | MIT |
 | [OpenCV.js](https://github.com/opencv/opencv) | Image processing for OCR | Apache-2.0 |
 | [Clipper](https://www.npmjs.com/package/clipper-lib) | Polygon maths for OCR | Boost Software License 1.0 |
-| [Qwen3 30B-A3B](https://github.com/QwenLM/Qwen3) (via Cloudflare Workers AI) | Meanings in context | Apache-2.0 |
+| Qwen 3.8 27B (via Cloudflare Workers AI) | Meanings in context | To confirm |
 | [pinyin-pro](https://github.com/zh-lx/pinyin-pro) | Pinyin with tone marks | MIT |
 | [Lexique 3.83](http://www.lexique.org/) | French word frequency (key words) | CC BY-SA 4.0 |
 | HSK 3.0 word lists | Chinese beginner vocabulary (key words) | MIT |

@@ -93,7 +93,7 @@ The app and OCR models download once and are cached; after that, each tap is one
 | API | Cloudflare Worker with Hono, request validation with Zod | MIT | Cloudflare |
 | Static hosting | Workers Static Assets (same Worker, same domain) | — | Cloudflare |
 | Database | D1 (SQLite) | — | Cloudflare |
-| Translation model | Workers AI: `@cf/qwen/qwen3-30b-a3b-fp8`, thinking turned off; alternative `@cf/mistralai/mistral-small-3.1-24b-instruct` | Apache-2.0 weights | Cloudflare |
+| Translation model | Workers AI: `@cf/qwen/qwen3.8-27b`, thinking turned off; alternative `@cf/mistralai/mistral-small-3.1-24b-instruct` | Licence to confirm | Cloudflare |
 | Tests | Vitest (unit), Playwright (one end-to-end smoke test) | MIT/Apache-2.0 | CI / local |
 
 **Repo layout**

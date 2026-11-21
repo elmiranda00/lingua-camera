@@ -6,6 +6,7 @@ import { requireUser } from "../lib/auth.ts";
 import { readJson } from "../lib/body.ts";
 import { timed } from "../lib/db.ts";
 import { apiError } from "../lib/errors.ts";
+import { modelThrew } from "../lib/model.ts";
 import { release, reserve } from "../lib/usage.ts";
 import { LIMITS } from "../limits.ts";
 
@@ -38,7 +39,7 @@ export const tts = new Hono<AppEnv>().post("/", requireUser, async (c) => {
     c.set("logExtra", {
       model: c.env.TTS_MODEL,
       model_ms: Date.now() - started,
-      error: err instanceof Error ? `model_threw:${err.name}` : "model_threw",
+      error: modelThrew(err),
     });
     c.executionCtx.waitUntil(release(c.env.DB, user.id, "tts").catch(() => {}));
     return apiError(c, 502, "model_error", "Speech isn't available for this language.");

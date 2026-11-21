@@ -66,7 +66,8 @@ npm run user:add -- "Name"                  # from the repo root; add --remote f
 - **Static files also go through the Worker** (`run_worker_first`), so the CSP covers every page.
 - **Cross-origin isolation headers on every response** (COOP `same-origin`, COEP `require-corp`) so the on-phone OCR can use several threads. They don't loosen the CSP; they only work because every file is same-origin. A third-party embed or image would now be blocked.
 - **Model output is never trusted.** Always Zod-validated; one retry, then a typed `502`.
-- **Qwen3 thinking is off** (`/no_think`). Unverified on Workers AI; the first deploy checks the timings.
+- **Thinking is off** via `chat_template_kwargs: { enable_thinking: false }`. Qwen 3.8 ignores `/no_think`; with thinking on, lookups take 5–50 s and can come back empty.
+- **Workers AI retires models.** A retired model fails every call fast with `model_threw:AiError:5028`. Swap `LOOKUP_MODEL` and re-check output with real calls.
 - **Logs never contain words, sentences or tokens.**
 - **One cache for all users, answers only.** A row holds the validated model answer under a hash key, never the word or sentence. The key includes the model and prompt version, so changing either starts a fresh cache. Case is kept in the key (Marie differs from marie). Rows don't expire.
 - **The cap is checked after the cache,** so cache hits are free and still work at the cap. It is one SQL upsert, so two lookups at once can't both take the last slot. Days are UTC dates; the counter resets at 00:00 UTC.

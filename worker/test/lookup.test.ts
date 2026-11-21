@@ -23,7 +23,7 @@ import {
 beforeAll(seedUsers);
 beforeEach(resetState);
 
-const MODEL = "@cf/qwen/qwen3-30b-a3b-fp8";
+const MODEL = "@cf/qwen/qwen3.8-27b";
 const PROMPT = LOOKUP_LLM.prompt.version;
 type Ai = { run: ReturnType<typeof vi.fn<ModelRunner["run"]>> };
 const aiWith = (output: unknown): Ai => ({ run: vi.fn<ModelRunner["run"]>().mockResolvedValue(output) });

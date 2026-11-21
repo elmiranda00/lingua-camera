@@ -104,7 +104,7 @@ describe("POST /api/lookup", () => {
     expect(body.cached).toBe(false);
     expect(body.requestId).toBe(res.headers.get("x-request-id"));
     expect(run).toHaveBeenCalledTimes(1);
-    expect(run.mock.calls[0]?.[0]).toBe("@cf/qwen/qwen3-30b-a3b-fp8");
+    expect(run.mock.calls[0]?.[0]).toBe("@cf/qwen/qwen3.8-27b");
   });
 
   it("retries once on invalid output, then succeeds", async () => {
